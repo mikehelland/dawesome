@@ -4,7 +4,7 @@ function OMGWindowManager(config) {
     this.div.className = "omgwm-desktop"
     this.windows = []
 
-    this.windowPadding = 10
+    this.windowPadding = 0
     this.nextZ = 1
 }
 
@@ -24,10 +24,10 @@ OMGWindowManager.prototype.newWindow = function (options) {
     }
 
     win.contentDiv.className = "omgwm-content"
-    win.moveDiv.className = "omgwm-control  omgwm-control-move"
+    win.moveDiv.className = "omgwm-control-move"
     win.resizeDiv.className = "omgwm-control omgwm-control-resize"
     win.closeDiv.className = "omgwm-control omgwm-control-close"
-    win.moveDiv.innerHTML = "&nbsp;"
+    win.moveDiv.innerHTML = options.caption || "&nbsp;"
     win.resizeDiv.innerHTML = "&nbsp;"
     win.closeDiv.innerHTML = "&nbsp;"
 
@@ -63,6 +63,10 @@ OMGWindowManager.prototype.move = function (win, x, y) {
     win.div.style.top = y + "px"
     win.x = x
     win.y = y
+
+    if (win.onmove) {
+        win.onmove()
+    }
 }
 
 
@@ -71,6 +75,10 @@ OMGWindowManager.prototype.resize = function (win, w, h) {
     win.div.style.height = h + this.windowPadding * 2 + "px"
     win.width = w
     win.height = h
+
+    if (win.onresize) {
+        win.onresize()
+    }
 }
 
 OMGWindowManager.prototype.close = function (win) {
@@ -141,10 +149,11 @@ OMGWindowManager.prototype.dndEnd = function (win, x, y, onupdate) {
 }
 
 OMGWindowManager.prototype.show = function (win) {
-    win.moveDiv.style.zIndex = this.nextZ
+    /*win.moveDiv.style.zIndex = this.nextZ
     win.resizeDiv.style.zIndex = this.nextZ
     win.closeDiv.style.zIndex = this.nextZ
-    win.contentDiv.style.zIndex = this.nextZ + 1
-    this.nextZ += 2
+    win.contentDiv.style.zIndex = this.nextZ + 1*/
+    win.div.style.zIndex = this.nextZ
+    this.nextZ += 1
     
 }

@@ -1,3 +1,4 @@
+"use strict";
 function Dawesome(config) {
     this.div = config.div
 
@@ -36,8 +37,18 @@ Dawesome.prototype.loadSong = function () {
     this.player.prepareSong(this.song)
     this.section = this.song.sections[0]
 
-    this.loadSections()
-    this.loadParts()
+    this.loadTimeline()
+    this.loadMixer()
+
+    this.song.onPartAudioParamsChangeListeners.push(part => {
+        this.timeline.partHeaders[part.data.name].muteButton.style.backgroundColor = part.data.audioParams.mute ?
+            "red" : "initial"
+    })
+    this.song.onPartChangeListeners.push((part, track, subbeat, value, source) => {
+        part.daw.updateTimelineCanvas()
+        console.log("part chagned")
+    })
+
 }
 
 Dawesome.prototype.setupTransport = function () {
@@ -65,57 +76,122 @@ Dawesome.prototype.setupTransport = function () {
 }
 
 Dawesome.prototype.setupTimeline = function () {
+    // the timeline is a grid, parts are the rows, sections are the columns
+
     this.timeline = {}
     this.timeline.window = this.wm.newWindow({caption: "Timeline", 
-                    width: window.innerWidth - 140, height: 180, x: 100, y: 0})
+                    width: window.innerWidth - 140, height: 480, x: 100, y: 0})
     this.timeline.div = this.timeline.window.contentDiv
     this.timeline.div.classList.add("daw-timeline")
 
     this.timeline.measureWidth = 500
     this.timeline.headerWidth = 200
     this.timeline.partHeight = 60
+    this.timeline.subbeatLength = 30
 
     this.timeline.headersDiv = document.createElement("div")
-    this.timeline.headersDiv.innerHTML = "&nbsp;"//placeholder
     this.timeline.headersDiv.className = "daw-timeline-headers"
+    
+    this.timeline.headersHeaderDiv = document.createElement("div")
+    this.timeline.headersHeaderDiv.className = "daw-timeline-headers-header"
+    this.timeline.addPartButton = document.createElement("div")
+    this.timeline.addSectionButton = document.createElement("div")
 
+    this.timeline.addPartButton.className = "daw-timeline-add-button"
+    this.timeline.addSectionButton.className = "daw-timeline-add-button"
+
+    this.timeline.addPartButton.innerHTML = "Add Part"
+    this.timeline.addSectionButton.innerHTML = "Add Section"
+
+    this.timeline.addPartButton.onclick = e => {
+        this.showAddPartWindow()
+    }
+    this.timeline.addSectionButton.onclick = e => {
+        this.addSection()
+    }
+    
+    this.timeline.headersHeaderDiv.appendChild(this.timeline.addPartButton)
+    this.timeline.headersHeaderDiv.appendChild(this.timeline.addSectionButton)
+    this.timeline.headersDiv.appendChild(this.timeline.headersHeaderDiv)
     this.timeline.div.appendChild(this.timeline.headersDiv)
 
-    
+    this.timeline.beatMarker = document.createElement("div")
+    this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
+    this.timeline.beatMarker.style.top = this.timeline.headersHeaderDiv.clientHeight + "px"
+    this.player.onBeatPlayedListeners.push((isubbeat, section) => {
+        this.timeline.beatMarker.style.left = this.timeline.headerWidth + 
+                                            (isubbeat === -1 ? 0 : isubbeat) * 
+                                            this.timeline.subbeatLength + "px"
+    })
+    this.timeline.beatMarker.style.left = this.timeline.headerWidth + "px"
+    this.timeline.beatMarker.style.display = "block"
+    this.timeline.beatMarker.style.height = "100%"
+    this.timeline.beatMarker.className = "beat-marker"
+    //this.beatMarker.style.height = "100%"
+    this.timeline.div.appendChild(this.timeline.beatMarker)
 }
 
 Dawesome.prototype.setupMixer = function () {
     this.mixer = {}
-    this.mixer.window = this.wm.newWindow({caption: "Mixer", width: 500, height: 200, x: 7, y: 240})
+    this.mixer.window = this.wm.newWindow({caption: "Mixer", 
+        width: 500, height: 200, x: 17, y: window.innerHeight - 240
+    })
     this.mixer.div = this.mixer.window.contentDiv
     this.mixer.div.classList.add("daw-mixer")
 
 }
 
-Dawesome.prototype.loadSections = function () {
+Dawesome.prototype.loadTimeline = function () {
     
     if (this.song.sections.length === 0) {
         // TODO show empty? make one?
         return 
     }
 
+    this.timeline.partHeaders = {}
+
+    this.timeline.subbeatLength = this.timeline.measureWidth / 
+                                (this.song.data.beatParams.subbeats * 
+                                this.song.data.beatParams.beats)
+    this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
+
     var widthUsed = 0
-    for (var i = 0; i < this.song.sections.length; i++) {
-        var div = this.newTimelineSection(this.song.sections[i])
+    var firstSection = true
+    for (var section of this.song.sections) {
+
+        var div = this.newTimelineSection(section)
         this.timeline.div.appendChild(div)
+        section.timelineDiv = div
+
+        for (var part of section.parts) {
+            if (!part.daw) {
+                part.daw = {}
+            }
+            if (firstSection) {
+                this.addTimelinePartHeader(part)
+            }
+
+            part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
+
+        }
+
+        this.addSectionPartsToTimeline(section)
 
         var measures = 1 // TODO from song or section
         div.style.left = this.timeline.headerWidth + widthUsed + "px"
         widthUsed += measures * this.timeline.measureWidth
 
-        this.song.sections[i].timelineDiv = div
+        firstSection = false
     }
+    this.timeline.sectionWidthUsed = widthUsed
+
 }
 
 
-Dawesome.prototype.loadParts = function () {
+Dawesome.prototype.loadMixer = function () {
     
     this.mixer.div.innerHTML = ""
+    this.mixer.visibleMeters = []
     
     if (!this.section || this.section.parts.length === 0) {
         // TODO show empty?
@@ -123,39 +199,73 @@ Dawesome.prototype.loadParts = function () {
     }
 
     for (var i = 0; i < this.section.parts.length; i++) {
-        var mixerChannel = this.newMixerChannel(this.section.parts[i])
-        this.mixer.div.appendChild(mixerChannel)
+        this.addMixerChannel(this.section.parts[i])
+    }
 
-        var timelineChannel = this.newTimelineHeader(this.section.parts[i])
-        this.timeline.headersDiv.appendChild(timelineChannel)
+}
 
-        for (var j = 0; j < this.song.sections.length; j++) {
-            var canvas = this.newPartCanvas(this.section.parts[i], this.song.sections[j])
-            this.song.sections[j].timelineDiv.appendChild(canvas)
-            canvas.style.top = timelineChannel.clientTop + "px"
-            canvas.style.left = "0px"
-            canvas.style.width = "100%"
-            canvas.style.height = timelineChannel.clientHeight + "px"
+Dawesome.prototype.addMixerChannel = function (part) {
+    var channelDiv = document.createElement("div")
+    channelDiv.className = "daw-mixer-channel"
 
-            this.partDrawer.drawPartCanvas(this.section.parts[i].data, canvas, 
-                    this.song.data.beatParams)
+    var volumeCanvas = document.createElement("canvas")
+    volumeCanvas.className = "daw-mixer-volume"
+    channelDiv.appendChild(volumeCanvas)
+
+    var ctx = volumeCanvas.getContext("2d")
+    ctx.fillStyle = "green"
+    ctx.fillRect(0, 0.3 * volumeCanvas.height, volumeCanvas.width, 0.7 * volumeCanvas.height)
+
+    var caption = document.createElement("div")
+    caption.innerHTML = part.data.name
+    caption.className = "daw-mixer-caption"
+    channelDiv.appendChild(caption)
+
+    if (part.postFXGain) {
+        this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, volumeCanvas, this.player.context));
+    }
+    else {
+        part.onnodesready = () => {
+            this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, volumeCanvas, this.player.context));
         }
     }
+
+    this.mixer.div.appendChild(channelDiv)
 }
 
-Dawesome.prototype.newMixerChannel = function (part) {
-    var channelDiv = document.createElement("div")
-    channelDiv.innerHTML = part.data.name
-    return channelDiv
-}
+Dawesome.prototype.addTimelinePartHeader = function (part) {
 
-Dawesome.prototype.newTimelineHeader = function (part) {
-    var div = document.createElement("div")
-    div.innerHTML = part.data.name
-    div.className = "daw-timeline-header"
-    div.style.width = this.timeline.headerWidth + "px"
-    div.style.height = this.timeline.partHeight + "px"
-    return div
+    var header = {
+        div: document.createElement("div"),
+        caption: document.createElement("div"),
+        muteButton: document.createElement("div")
+    }
+
+    header.div.className = "daw-timeline-header"
+    header.div.style.width = this.timeline.headerWidth + "px"
+    header.div.style.height = this.timeline.partHeight + "px"
+
+    header.caption.innerHTML = part.data.name
+    header.caption.className = "daw-timeline-part-caption"
+    header.caption.innerHTML = part.data.name
+    
+    header.muteButton = document.createElement("div")
+    header.muteButton.className = "daw-timeline-mute-button"
+    header.muteButton.innerHTML = "M"
+    header.muteButton.onclick = e => {
+        this.player.mutePart(part, !part.data.audioParams.mute)
+    }
+
+    header.recordButton = document.createElement("div")
+    header.recordButton.className = "daw-timeline-record-button"
+    header.recordButton.innerHTML = "R"
+
+    header.div.appendChild(header.caption)
+    header.div.appendChild(header.muteButton)
+    //header.div.appendChild(header.recordButton)
+    this.timeline.headersDiv.appendChild(header.div)
+    this.timeline.partHeaders[part.data.name] = header
+    return header
 }
 
 Dawesome.prototype.newTimelineSection = function (section) {
@@ -191,14 +301,101 @@ Dawesome.prototype.showPartDetail = function (part) {
     part.detailWindow = this.wm.newWindow({caption: part.data.name, width: 400, height: 600})
 
     if (part.data.surface.url === "PRESET_SEQUENCER") {
-        part.sequencer = new OMGDrumMachine(part.detailWindow.contentDiv, part)
-        part.sequencer.readOnly = false
-        part.sequencer.draw()
+        part.detailSurface = new OMGDrumMachine(part.detailWindow.contentDiv, part)
     }
     else {
-        part.vertical = new OMGMelodyMaker(part.detailWindow.contentDiv, part, this.player)
-        part.vertical.readOnly = false
-        part.vertical.draw()
+        part.detailSurface = new OMGMelodyMaker(part.detailWindow.contentDiv, part, this.player)
     }
+    part.detailSurface.readOnly = false
+    part.detailSurface.draw()
 
+    part.detailWindow.onmove = () => {
+        part.detailSurface.setPageOffsets()
+    }
+    part.detailWindow.onresize = () => {
+        part.detailSurface.backgroundDrawn = false
+        part.detailSurface.draw()
+    }
+}
+
+Dawesome.prototype.showAddPartWindow = function () {
+    var win = this.wm.newWindow({
+        caption: "Add Part", 
+        width: 600, height: 700, 
+        x: window.innerWidth - 610, y: 40
+    })
+    var searchFrame = document.createElement("iframe")
+    searchFrame.src = "/select.htm?types=SOUNDSET"
+    win.contentDiv.appendChild(searchFrame)
+
+    searchFrame.onload = e => {
+        searchFrame.contentWindow.onclickcontent = e => {
+            this.addPart(e.data)
+            this.wm.close(win)
+        }
+    }
+}
+
+Dawesome.prototype.addSection = function () {
+    var newSectionData = this.section.getData();
+    
+    var names = this.song.sections.map(section => section.data.name);
+    newSectionData.name = omg.util.getUniqueName(newSectionData.name, names);
+    var newSection = new OMGSection(newSectionData, this.song);
+    this.player.loadSection(newSection);
+    //this.player.loopSection = this.song.sections.indexOf(newSection);
+    
+    newSection.parts.forEach(part => {
+        part.daw = {}
+        part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
+        if (!part.daw.timelineHeader) {
+            console.warn("no part header!", part.data.name)
+        }
+    })
+
+    var div = this.newTimelineSection(newSection)
+    this.timeline.div.appendChild(div)
+
+    var measures = 1 // TODO from song or section
+    div.style.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed + "px"
+    this.timeline.sectionWidthUsed += measures * this.timeline.measureWidth
+
+    newSection.timelineDiv = div
+
+    this.addSectionPartsToTimeline(newSection);
+    return newSection;
+}
+
+Dawesome.prototype.addSectionPartsToTimeline = function (section) {
+    for (var part of section.parts) {
+        this.addPartToTimeline(part, section)
+    }
+}
+
+Dawesome.prototype.addPartToTimeline = function (part, section) {
+
+    var canvas = this.newPartCanvas(part, section)
+    section.timelineDiv.appendChild(canvas)
+    canvas.style.top = part.daw.timelineHeader.div.clientTop + "px"
+    canvas.style.left = "0px"
+    canvas.style.width = "100%"
+    canvas.style.height = part.daw.timelineHeader.div.clientHeight + "px"
+
+    part.daw.timelineCanvas = canvas
+    part.daw.updateTimelineCanvas = (track, subbeat, value) => {
+        this.partDrawer.drawPartCanvas(part.data, canvas, 
+            this.song.data.beatParams)
+    }
+    part.daw.updateTimelineCanvas()
+}
+
+Dawesome.prototype.addPart = function (data) {
+    var part = new OMGPart(null, {soundSet: data}, this.section)
+    this.player.loadPart(part)
+    part.daw = {}
+
+    this.addMixerChannel(part)
+    var partHeader = this.addTimelinePartHeader(part)
+    part.daw.timelineHeader = partHeader
+    this.addPartToTimeline(part, this.section)
 }
