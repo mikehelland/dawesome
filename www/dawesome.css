@@ -130,7 +130,7 @@ iframe {
 }
 
 .daw-timeline-section {
-    border:1px solid #808080;
+    border:1px solid #4a4a4a;
     position: absolute;
     height:100%;
 }
@@ -208,6 +208,8 @@ iframe {
 }
 .daw-mixer-pan {
     height: 25px;
+    background-color: #202020;
+    border-bottom: 1px solid gray;
 }
 .daw-mixer-caption {
     height: 20px;

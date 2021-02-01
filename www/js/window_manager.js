@@ -44,6 +44,12 @@ OMGWindowManager.prototype.newWindow = function (options) {
     win.div.style.left = win.x + "px"
     win.div.style.top = win.y + "px"
     
+    if (options.overflowX) {
+        win.contentDiv.style.overflowX = options.overflowX
+    }
+    if (options.overflowY) {
+        win.contentDiv.style.overflowY = options.overflowY
+    }
     this.div.appendChild(win.div)
 
     this.windows.push(win)

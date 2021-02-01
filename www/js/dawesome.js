@@ -240,7 +240,7 @@ Dawesome.prototype.addMixerChannel = function (part) {
             "color": part.data.audioParams.mute ?"#880000" : "#008800", transform: "square", direction: "vertical"};
     var volumeSlider = new SliderCanvas(volumeCanvas, volumeProperty, part.gain, part.data.audioParams, onchange);
 
-    var panProperty = {"property": "pan", "name": "", "type": "slider", "min": -1, "max": 1, resetValue: 0, "color": "#000088", hideValue: true};
+    var panProperty = {"property": "pan", "name": "", "type": "slider", "min": -1, "max": 1, resetValue: 0, "color": "#000080", hideValue: true};
     var panSlider = new SliderCanvas(panCanvas, panProperty, part.panner, part.data.audioParams, onchange);
 
     volumeSlider.sizeCanvas()
@@ -358,7 +358,8 @@ Dawesome.prototype.showAddPartWindow = function () {
     var win = this.wm.newWindow({
         caption: "Add Part", 
         width: 300, height: window.innerHeight - 40, 
-        x: window.innerWidth - 610, y: 40
+        x: window.innerWidth - 610, y: 40,
+        overflowY: "auto"
     })
 
     var searchBox = new OMGSearchBox({types: ["SOUNDSET"]})
