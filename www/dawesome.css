@@ -37,15 +37,14 @@ body {
 .omgwm-control {
     position: absolute;
     background-color: rgb(23, 78, 133);
-    border-radius: 50%;
     width:35px;
     height:35px;
     z-index: 1;
 }
 
 .omgwm-control-resize {
-    bottom: 0;
-    right: 0;
+    bottom: -5px;
+    right: -5px;
     cursor: nwse-resize;
 }
 
@@ -60,12 +59,13 @@ body {
 }
 
 .omgwm-control-close {
-    top: 0;
-    right: 0;
+    border-radius: 50%;
+    top: 2px;
+    right: 2px;
     background-color: rgb(133, 23, 78);
     cursor: pointer;
-    width:25px;
-    height:25px;
+    width:20px;
+    height:20px;
     
 }
 
@@ -94,13 +94,30 @@ iframe {
 
 .daw-transport-play-button {
     padding: 5px;
+    margin: 5px;
     border-radius: 5px;
     border: 1px solid gray;
     cursor: pointer;
     display: inline-block;
+    min-width: 20px;
+    text-align: center;
+    opacity: 0.7;
 }
-.daw-transport-play-button:hover {
-    background-color: black;
+.daw-transport-play-button:hover, .daw-transport-control:hover {
+    opacity: 1;
+}
+.daw-transport-control {
+    padding: 5px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid gray;
+    cursor: pointer;
+    display: inline-block;
+    opacity: 0.7;
+}
+.daw-transport-control-active {
+    background-color: #AAAAAA;
+    color:black
 }
 
 
@@ -119,13 +136,15 @@ iframe {
 }
 .daw-timeline-section-caption {
     border-radius: 5px;
-    background-color: green;
+    background-color: #025502; 
     border: 1px solid black;
     text-align: center;
     z-index: 2;
     padding: 5px 0;
 }
-
+.daw-timeline-section-caption-active {
+    background-color: green;
+}
 .daw-timeline-headers {
     position: absolute;
 }
@@ -138,7 +157,6 @@ iframe {
 
 .daw-timeline-part-canvas {
     cursor: pointer;
-    background-color: #888888;;
 }
 
 .daw-timeline-headers-header {
@@ -186,8 +204,20 @@ iframe {
 .daw-mixer-volume {
     background-color: #202020;
     flex-grow: 1;
+    position: relative;
+}
+.daw-mixer-pan {
+    height: 25px;
 }
 .daw-mixer-caption {
     height: 20px;
     overflow: hidden;
+}
+
+
+
+.daw-add-part-search-result {
+    padding:6px;
+    border-bottom: 1px solid gray;
+    cursor: pointer;
 }

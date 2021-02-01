@@ -149,10 +149,6 @@ OMGWindowManager.prototype.dndEnd = function (win, x, y, onupdate) {
 }
 
 OMGWindowManager.prototype.show = function (win) {
-    /*win.moveDiv.style.zIndex = this.nextZ
-    win.resizeDiv.style.zIndex = this.nextZ
-    win.closeDiv.style.zIndex = this.nextZ
-    win.contentDiv.style.zIndex = this.nextZ + 1*/
     win.div.style.zIndex = this.nextZ
     this.nextZ += 1
     
