@@ -11,7 +11,7 @@ function Dawesome(config) {
     
     this.wm = new OMGWindowManager(config)
 
-    this.transportWindowConfig = {caption: "Transport", width: 300, height: 80, x: 0, y: 0}
+    this.transportWindowConfig = {caption: "Transport", width: 600, height: 80, x: 0, y: 0}
     this.timelineWindowConfig = {caption: "Timeline", width: window.innerWidth, height: 480, x: 0, y: 80}
     this.mixerWindowConfig = {caption: "Mixer", width: 500, height: 300, x: 17, y: window.innerHeight - 240
 }
@@ -21,6 +21,9 @@ function Dawesome(config) {
     this.setupMixer()
 
     this.loadSong()
+
+    this.transport.updateBeats()
+    this.transport.updateKey()
 
 }
 
@@ -45,15 +48,7 @@ Dawesome.prototype.loadSong = function () {
     this.loadTimeline()
     this.loadMixer()
 
-    this.song.onPartAudioParamsChangeListeners.push(part => {
-        this.timeline.partHeaders[part.data.name].muteButton.style.backgroundColor = part.data.audioParams.mute ?
-            "red" : "initial"
-    })
-    this.song.onPartChangeListeners.push((part, track, subbeat, value, source) => {
-        part.daw.updateTimelineCanvas()
-        console.log("part chagned")
-    })
-
+    this.setupSongListeners()
 }
 
 Dawesome.prototype.setupTransport = function () {
@@ -62,7 +57,14 @@ Dawesome.prototype.setupTransport = function () {
     this.transport.playButtonEl = document.createElement("div")
     this.transport.playButtonEl.className = "daw-transport-play-button"
     this.transport.playButtonEl.innerHTML = this.playChar
-    
+
+    this.transport.beatParamsEl = document.createElement("div")
+    this.transport.beatParamsEl.className = "daw-transport-control"
+
+    this.transport.keyParamsEl = document.createElement("div")
+    this.transport.keyParamsEl.className = "daw-transport-control"
+    this.transport.keyParamsEl.innerHTML = "C Major"
+
     this.transport.loopSectionEl = document.createElement("div")
     this.transport.loopSectionEl.className = "daw-transport-control"
     this.transport.loopSectionEl.innerHTML = "Loop Section"
@@ -71,6 +73,8 @@ Dawesome.prototype.setupTransport = function () {
 
     this.transport.div = this.transport.window.contentDiv
     this.transport.div.appendChild(this.transport.playButtonEl)
+    this.transport.div.appendChild(this.transport.beatParamsEl)
+    this.transport.div.appendChild(this.transport.keyParamsEl)
     this.transport.div.appendChild(this.transport.loopSectionEl)
 
     this.transport.playButtonEl.onclick = e => {
@@ -95,6 +99,20 @@ Dawesome.prototype.setupTransport = function () {
             this.player.loopSection = -1
             this.transport.loopSectionEl.classList.remove("daw-transport-control-active")
         }
+    }
+    this.transport.beatParamsEl.onclick = e => {
+        this.showBeatParamsWindow()
+    }
+    this.transport.keyParamsEl.onclick = e => {
+        this.showKeyParamsWindow()
+    }
+
+    this.transport.updateBeats = () => {
+        this.transport.beatParamsEl.innerHTML = this.song.data.beatParams.beats + "/" + 
+                this.song.data.beatParams.subbeats + " " + this.song.data.beatParams.bpm + " bpm"
+    }
+    this.transport.updateKey = () => {
+        this.transport.keyParamsEl.innerHTML = omg.ui.getKeyCaption(this.song.data.keyParams)
     }
 }
 
@@ -435,4 +453,51 @@ Dawesome.prototype.addPart = function (data) {
     var partHeader = this.addTimelinePartHeader(part)
     part.daw.timelineHeader = partHeader
     this.addPartToTimeline(part, this.section)
+}
+
+Dawesome.prototype.showBeatParamsWindow = function () {
+    if (!this.beatParamsFragment) {
+        this.beatParamsFragment = new BeatParamsFragment(this.song)        
+    }
+
+    this.wm.showFragment(this.beatParamsFragment, {
+        caption: "Beat Parameters",
+        height: 250,
+        width: 300
+    })
+}
+
+Dawesome.prototype.showKeyParamsWindow = function () {
+    if (!this.keyParamsFragment) {
+        this.keyParamsFragment = new KeyParamsFragment(this.song)
+    }
+
+    this.wm.showFragment(this.keyParamsFragment, {
+        caption: "Key Parameters",
+        height: 400,
+        width: 300
+    })
+}
+
+Dawesome.prototype.setupSongListeners = function () {
+ 
+    this.song.onBeatChangeListeners.push(() => {
+        this.transport.updateBeats()
+    })
+ 
+    this.song.onKeyChangeListeners.push(() => {
+        this.transport.updateKey()
+    })
+
+    /*this.onPartAddListeners = [];
+    this.onChordProgressionChangeListeners = [];
+    this.onFXChangeListeners = [];*/
+ 
+    this.song.onPartAudioParamsChangeListeners.push(part => {
+        this.timeline.partHeaders[part.data.name].muteButton.style.backgroundColor = part.data.audioParams.mute ?
+            "red" : "initial"
+    })
+    this.song.onPartChangeListeners.push((part, track, subbeat, value, source) => {
+        part.daw.updateTimelineCanvas()
+    })
 }

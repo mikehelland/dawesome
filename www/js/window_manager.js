@@ -88,6 +88,7 @@ OMGWindowManager.prototype.resize = function (win, w, h) {
 }
 
 OMGWindowManager.prototype.close = function (win) {
+    win.hidden = true
     var i = this.windows.indexOf(win)
     if (i > -1) {
         this.windows.splice(i, 1)
@@ -155,7 +156,27 @@ OMGWindowManager.prototype.dndEnd = function (win, x, y, onupdate) {
 }
 
 OMGWindowManager.prototype.show = function (win) {
+    if (win.hidden) {
+        this.div.appendChild(win.div)
+        this.windows.push(win)
+    }
+
     win.div.style.zIndex = this.nextZ
     this.nextZ += 1
     
+    if (win.onshow) {
+        win.onshow()
+    }
+}
+
+OMGWindowManager.prototype.showFragment = function (fragment, winOptions) {
+
+    if (!fragment.window) {
+        fragment.window = this.newWindow(winOptions)
+    }
+    fragment.div.classList.add("omgwm-fragment")
+    fragment.window.contentDiv.appendChild(fragment.div)
+    fragment.window.onshow = () => {fragment.onshow()}
+
+    this.show(fragment.window)
 }
