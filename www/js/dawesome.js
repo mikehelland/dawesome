@@ -12,8 +12,8 @@ function Dawesome(config) {
     this.wm = new OMGWindowManager(config)
 
     this.transportWindowConfig = {caption: "Transport", width: 600, height: 80, x: 0, y: 0}
-    this.timelineWindowConfig = {caption: "Timeline", width: window.innerWidth, height: 480, x: 0, y: 80}
-    this.mixerWindowConfig = {caption: "Mixer", width: 500, height: 300, x: 17, y: window.innerHeight - 240
+    this.timelineWindowConfig = {caption: "Timeline", width: window.innerWidth - 5, height: 480, x: 0, y: 80}
+    this.mixerWindowConfig = {caption: "Mixer", width: 500, height: 300, x: 17, y: window.innerHeight - 340
 }
 
     this.setupTransport()
