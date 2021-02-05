@@ -5,73 +5,7 @@ body {
     
 }
 
-.omgwm-desktop {
-    height:100%;
-    width:100%;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
 
-.omgwm-window {
-    position:absolute;
-    padding:20px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    border:2px solid rgb(23, 78, 133);
-    border-radius: 5px;
-    
-}
-
-.omgwm-content {
-    background-color: #303030;
-    height: 100%;
-    width:100%;
-    z-index: 2;
-    position: relative;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-.omgwm-control {
-    position: absolute;
-    background-color: rgb(23, 78, 133);
-    width:35px;
-    height:35px;
-    z-index: 1;
-}
-
-.omgwm-control-resize {
-    bottom: -5px;
-    right: -5px;
-    cursor: nwse-resize;
-}
-
-.omgwm-control-move {
-    top: 0;
-    left: 0;
-    width: 100%;
-    cursor: move;
-    background-color: rgb(23, 78, 133);
-    padding: 5px;
-    box-sizing: border-box;
-}
-
-.omgwm-control-close {
-    border-radius: 50%;
-    top: 2px;
-    right: 2px;
-    background-color: rgb(133, 23, 78);
-    cursor: pointer;
-    width:20px;
-    height:20px;
-    
-}
-
-.omgwm-fragment {
-    height: 100%
-}
 
 
 .surface-canvas {
