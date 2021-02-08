@@ -3,6 +3,7 @@
     <head>
         <link rel="stylesheet" href="/css/window_manager.css" type="text/css" />
         <link rel="stylesheet" href="dawesome.css" type="text/css" />
+        <link rel="stylesheet" href="/css/viewer.css" type="text/css" />
         <style>
             html, body {
                 height:100%;
@@ -18,20 +19,25 @@
 
         <script src="/js/omgservice.js"></script>
         <script src="/js/searchbox.js"></script>
-        <script src="/apps/music/js/omgclasses.js"></script>
+        <!--<script src="/apps/music/js/omgclasses.js"></script>-->
         <script src="/apps/music/js/omgservice_music.js"></script>
-        <script src="/apps/music/js/omusic_player.js"></script>
+        <script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
+		<script src="/apps/music/js/omusic_player2.js"></script>
         <script src="/apps/music/js/omusic-embed-draw.js"></script>
         <script src="/apps/music/js/sequencer_surface.js"></script>
         <script src="/apps/music/js/vertical_surface.js"></script>
         <script src="/apps/music/js/libs/peakmeter.js"></script>
+        
         
         <script src="js/slider_canvas.js"></script>
         <script src="js/dawesome.js"></script>
         <script src="js/dawesome_fragments.js"></script>
         <script src="/js/window_manager.js"></script>
         <script>
-            var daw = new Dawesome({div: document.getElementById("dawesome")})
+            var daw = new Dawesome({
+                div: document.getElementById("dawesome"),
+                showMainMenu: true
+            })
         </script>
     </body>
 </html>

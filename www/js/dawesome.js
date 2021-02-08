@@ -15,6 +15,10 @@ function Dawesome(config) {
     this.timelineWindowConfig = config.timelineWindowConfig || {caption: "Timeline", width: window.innerWidth - 5, height: 480, x: 0, y: 80}
     this.mixerWindowConfig = config.mixerWindowConfig || {caption: "Mixer", width: 500, height: 300, x: 17, y: window.innerHeight - 340}
 
+    if (config.showMainMenu) {
+        this.setupMenu()
+    }
+
     this.setupTransport()
     this.setupTimeline()
     this.setupMixer()
@@ -40,9 +44,9 @@ Dawesome.prototype.loadSong = function () {
         });
     */
 
-    this.song = new OMGSong(defaultSong)
+    this.song = new OMGSong() //defaultSong
     this.player.prepareSong(this.song)
-    this.section = this.song.sections[0]
+    this.section = this.song.addSection({name: "Intro"})
     
     this.loadTimeline()
     this.loadMixer()
@@ -88,14 +92,14 @@ Dawesome.prototype.setupTransport = function () {
     }
 
     this.transport.loopSectionEl.onclick = e => {
-        if (this.player.loopSection === -1) {
-            this.player.loopSection = this.song.sections.indexOf(this.player.section)
+        if (!this.player.loopSection) {
+            this.player.loopSection = this.player.section
             this.transport.loopSectionEl.classList.add("daw-transport-control-active")
             this.player.section.timelineCaptionDiv.classList.add("daw-timeline-section-caption-active")
         }
         else {
             this.player.section.timelineCaptionDiv.classList.remove("daw-timeline-section-caption-active")
-            this.player.loopSection = -1
+            this.player.loopSection = null
             this.transport.loopSectionEl.classList.remove("daw-transport-control-active")
         }
     }
@@ -133,6 +137,7 @@ Dawesome.prototype.setupTimeline = function () {
     
     this.timeline.headersHeaderDiv = document.createElement("div")
     this.timeline.headersHeaderDiv.className = "daw-timeline-headers-header"
+    this.timeline.headersHeaderDiv.style.width = this.timeline.headerWidth + "px"
     this.timeline.addPartButton = document.createElement("div")
     this.timeline.addSectionButton = document.createElement("div")
 
@@ -195,11 +200,12 @@ Dawesome.prototype.loadTimeline = function () {
 
     this.timeline.sectionWidthUsed = 0
     var firstSection = true
-    for (var section of this.song.sections) {
+    for (var sectionName in this.song.sections) {
+        var section = this.song.sections[sectionName]
 
         this.addTimelineSection(section)
-        
-        for (var part of section.parts) {
+        for (var partName in section.parts) {
+            var part = section.parts[partName]
             if (!part.daw) {
                 part.daw = {}
             }
@@ -337,7 +343,6 @@ Dawesome.prototype.newPartCanvas = function (part) {
     div.innerHTML = part.data.name
     div.className = "daw-timeline-part-canvas"
     div.style.width = this.timeline.measureWidth + "px" //TODO figure out how many measures
-
     div.onclick = e => {
         this.showPartDetail(part)
     }
@@ -350,7 +355,8 @@ Dawesome.prototype.showPartDetail = function (part) {
     //check to see if the window already exists
     part.detailWindow = this.wm.newWindow({
         caption: part.data.name + " - " + part.section.data.name, 
-        width: 400, height: 600
+        x: window.innerWidth / 2,
+        width: 600, height: 600
     })
 
     if (part.data.surface.url === "PRESET_SEQUENCER") {
@@ -372,47 +378,40 @@ Dawesome.prototype.showPartDetail = function (part) {
 }
 
 Dawesome.prototype.showAddPartWindow = function () {
-    var win = this.wm.newWindow({
+    var addCallback = data => {
+        this.addPart(data)
+        this.wm.close(win)
+    }
+
+    var win = this.wm.showFragment(new AddPartFragment(addCallback), {
         caption: "Add Part", 
-        width: 300, height: window.innerHeight - 40, 
+        width: 400, height: window.innerHeight - 80, 
         x: window.innerWidth - 610, y: 40,
         overflowY: "auto"
     })
-
-    var searchBox = new OMGSearchBox({types: ["SOUNDSET"]})
-    win.contentDiv.appendChild(searchBox.div)
-    searchBox.loadSearchResults = results => {
-        results.forEach(result => {
-            var resultDiv = document.createElement("div")
-            resultDiv.innerHTML = result.name
-            resultDiv.className = "daw-add-part-search-result"
-            searchBox.resultList.appendChild(resultDiv)
-
-            resultDiv.onclick = e => {
-                this.addPart(result)
-                this.wm.close(win)
-            }
-        })
-    }
-    searchBox.search()
+    
 }
 
 Dawesome.prototype.addSection = function () {
-    var newSectionData = this.section.getData();
     
-    var names = this.song.sections.map(section => section.data.name);
-    newSectionData.name = omg.util.getUniqueName(newSectionData.name, names);
-    var newSection = new OMGSection(newSectionData, this.song);
+    var newSection
+    if (this.section) {
+        newSection = this.song.addSection(this.section.data)
+    }
+    else {
+        newSection = this.song.addSection()
+    }
     this.player.loadSection(newSection);
     //this.player.loopSection = this.song.sections.indexOf(newSection);
     
-    newSection.parts.forEach(part => {
+    for (var partName in newSection.parts) {
+        var part = newSection.parts[partName]
         part.daw = {}
         part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
         if (!part.daw.timelineHeader) {
             console.warn("no part header!", part.data.name)
         }
-    })
+    }
 
     this.addTimelineSection(newSection)
     
@@ -421,13 +420,13 @@ Dawesome.prototype.addSection = function () {
 }
 
 Dawesome.prototype.addSectionPartsToTimeline = function (section) {
-    for (var part of section.parts) {
+    for (var partName in section.parts) {
+        var part = section.parts[partName]
         this.addPartToTimeline(part, section)
     }
 }
 
 Dawesome.prototype.addPartToTimeline = function (part, section) {
-
     var canvas = this.newPartCanvas(part, section)
     section.timelineDiv.appendChild(canvas)
     canvas.style.top = part.daw.timelineHeader.div.clientTop + "px"
@@ -444,13 +443,22 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
 }
 
 Dawesome.prototype.addPart = function (data) {
-    var part = new OMGPart(null, {soundSet: data}, this.section)
-    this.player.loadPart(part)
-    part.daw = {}
+    
+    // add it this head part to the song
+    var headPart = this.song.addPart(data)
+    
+    this.player.loadPart(headPart)
+    headPart.daw = {}
 
-    this.addMixerChannel(part)
-    var partHeader = this.addTimelinePartHeader(part)
+    this.addMixerChannel(headPart)
+    var partHeader = this.addTimelinePartHeader(headPart)
+    headPart.daw.timelineHeader = partHeader
+
+    // now add an instance for the section
+    var part = this.song.addPartToSection(headPart, this.section)
+    part.daw = {}
     part.daw.timelineHeader = partHeader
+
     this.addPartToTimeline(part, this.section)
 }
 
@@ -498,5 +506,51 @@ Dawesome.prototype.setupSongListeners = function () {
     })
     this.song.onPartChangeListeners.push((part, track, subbeat, value, source) => {
         part.daw.updateTimelineCanvas()
+    })
+}
+
+Dawesome.prototype.setupMenu = function () {
+    this.wm.showMainMenu({
+        items: [
+            {name: "File", items: [
+                {name: "New", onclick: () => this.new()},
+                {name: "Open", onclick: () => this.open()},
+                {name: "Save", onclick: () => this.save()}
+            ]},
+            {name: "Window", items: [
+                {name: "Transport", onclick: () => this.newSong()},
+                {name: "Timeline", onclick: () => this.newSong()},
+                {name: "Mixer", onclick: () => this.newSong()},
+                {separator: true},
+                {name: "Live Collaboration", onclick: () => this.newSong()},
+                {name: "Remote Controls", onclick: () => this.newSong()},
+                {name: "Monkey Randomizer", onclick: () => this.newSong()}
+            ]},
+            {name: "Help", items: [
+            ]}
+        ]
+    })
+
+
+}
+
+Dawesome.prototype.save = function () {
+    var f = new SaveFragment(this.song)
+
+    this.wm.showFragment(f, {
+        caption: "Save",
+        height: 250,
+        width: 300
+    })
+}
+
+Dawesome.prototype.open = function () {
+    var f = new OpenFragment()
+
+    this.wm.showFragment(f, {
+        caption: "Open",
+        height: 450,
+        width: 600,
+        overflowY: "scroll"
     })
 }

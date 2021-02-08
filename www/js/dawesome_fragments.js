@@ -225,3 +225,228 @@ KeyParamsFragment.prototype.keyChanged = function () {
     });*/
     this.song.keyChanged();
 };
+
+
+/* ADD PART FRAGMENT */
+
+function AddPartFragment(addCallback) {
+
+    this.div = document.createElement("div")
+    this.addCallback = addCallback
+    this.selectSoundType = document.createElement("select")
+    this.selectSoundType.innerHTML = `
+        <option value="soundfont">SoundFont</option>
+        <option value="synth">Synth</option>
+        <option value="search">Search Gallery</option>`
+    this.selectSoundType.onchange = e => {
+        if (this.selectSoundType.value === "soundfont") {
+            this.searchGalleryDiv.style.display = "none"
+            this.selectSoundFontDiv.style.display = "block"
+        }
+        else if (this.selectSoundType.value === "search") {
+            this.selectSoundFontDiv.style.display = "none"
+            this.searchGalleryDiv.style.display = "block"
+            this.gallerySearchBox.search()
+
+        }
+        else if (this.selectSoundType.value === "soundfont") {
+
+        }
+    }
+
+    this.div.innerHTML = "<div style='padding:20px'>Find sounds in the gallery or add your own</div>"
+    this.div.appendChild(this.selectSoundType)
+
+    this.setupSoundFontPage()
+    this.setupSearchPage()
+}
+
+AddPartFragment.prototype.setupSoundFontPage = function () {
+
+    this.selectSoundFontDiv = document.createElement("div")
+    this.selectSoundFontCategory = document.createElement("select")
+    this.selectSoundFontPatch = document.createElement("select")
+    this.selectSoundFontFile = document.createElement("select")
+
+    this.selectSoundFontDiv.innerHTML = "<p>Select a <a target='_out' href='https://github.com/surikov/webaudiofont'>SoundFont</a></p>"
+    var captionDiv
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "Category:"
+    this.selectSoundFontDiv.appendChild(captionDiv)
+    this.selectSoundFontDiv.appendChild(this.selectSoundFontCategory)
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "Patch:"
+    this.selectSoundFontDiv.appendChild(captionDiv)
+    this.selectSoundFontDiv.appendChild(this.selectSoundFontPatch)
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "File:"
+    this.selectSoundFontDiv.appendChild(captionDiv)
+    this.selectSoundFontDiv.appendChild(this.selectSoundFontFile)
+
+    var addButton = document.createElement("button")
+    addButton.onclick = e => {
+        if (this.addCallback) {
+            var name = this.selectSoundFontPatch.options[this.selectSoundFontPatch.selectedIndex].innerHTML
+            var file = this.selectSoundFontFile.options[this.selectSoundFontFile.selectedIndex].innerHTML
+            this.addCallback({
+                name: name,
+                soundSet: {
+                    soundFont: {
+                        url: this.selectSoundFontFile.value, 
+                        name: file
+                    },
+                    octave: 5, lowNote: 0, highNote: 108, chromatic: true
+                }
+            })
+        }
+    }
+    addButton.innerHTML = "Add"
+    this.selectSoundFontDiv.appendChild(addButton)
+
+    this.div.appendChild(this.selectSoundFontDiv)
+
+    fetch("/apps/music/js/libs/soundfonts.json").then(res=>res.json()).then(soundFonts => {
+        this.soundFonts = soundFonts
+        this.soundFontCategories = {}
+        var selectHTML = ""
+        soundFonts.forEach(sf => {
+            if (!this.soundFontCategories[sf.category]) {
+                this.soundFontCategories[sf.category] = []
+                selectHTML += "<option value='" + sf.category + "'>" + sf.category + "</option>"
+            }
+            this.soundFontCategories[sf.category].push(sf)
+
+        })
+        this.selectSoundFontCategory.innerHTML = selectHTML
+        this.selectSoundFontCategory.onchange()
+    })
+
+    this.selectSoundFontCategory.onchange = e => {
+        var selectHTML = ""
+        this.soundFontCategories[this.selectSoundFontCategory.value].forEach((sf, i) => {
+            selectHTML += "<option value='" + i + "'>" + sf.name + "</option>"
+        })
+        this.selectSoundFontPatch.innerHTML = selectHTML
+        this.selectSoundFontPatch.onchange()    
+    }
+
+    this.selectSoundFontPatch.onchange = e => {
+        var selectHTML = ""
+        this.soundFontCategories[this.selectSoundFontCategory.value][this.selectSoundFontPatch.selectedIndex].files.forEach((f, i) => {
+            var file = f.split("/")
+            file = file[file.length - 1]
+            selectHTML += "<option value='" + f + "'>" + file + "</option>"
+        })
+        this.selectSoundFontFile.innerHTML = selectHTML
+    }
+
+}
+
+AddPartFragment.prototype.setupSearchPage = function () {
+
+    this.searchGalleryDiv = document.createElement("div")
+    var searchBox = new OMGSearchBox({types: ["SOUNDSET"]})
+    this.searchGalleryDiv.appendChild(searchBox.div)
+    searchBox.loadSearchResults = results => {
+        results.forEach(result => {
+            var resultDiv = document.createElement("div")
+            resultDiv.innerHTML = result.name
+            resultDiv.className = "daw-add-part-search-result"
+            searchBox.resultList.appendChild(resultDiv)
+
+            resultDiv.onclick = e => {
+                if (this.addCallback) {
+                    this.addCallback({soundSet: result})
+                }
+            }
+        })
+    }
+    this.gallerySearchBox = searchBox
+
+    this.searchGalleryDiv.style.display = "none"
+    this.div.appendChild(this.searchGalleryDiv)
+}
+
+function SaveFragment(song) {
+
+    var captionDiv
+
+    this.song = song
+    this.div = document.createElement("div")
+    
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "Song Name:"
+    this.div.appendChild(captionDiv)
+    this.nameInput = document.createElement("input")
+    this.div.appendChild(this.nameInput)
+    
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "Tags:"
+    this.div.appendChild(captionDiv)
+    this.tagsInput = document.createElement("input")
+    this.div.appendChild(this.tagsInput)
+    
+    captionDiv = document.createElement("div")
+    captionDiv.innerHTML = "Bitcoin Address (your tip jar):"
+    this.div.appendChild(captionDiv)
+    this.btcInput = document.createElement("input")
+    this.div.appendChild(this.btcInput)
+
+    this.nameInput.value = song.data.name || ""
+    this.tagsInput.value = song.data.tags || ""
+    this.btcInput.value = song.data.btc_address || ""
+
+
+    
+    if (song.data.id) {
+        this.overwriteButton = document.createElement("button")
+        this.overwriteButton.innerHTML = "Overwrite"
+        this.saveCopyButton = document.createElement("button")
+        this.saveCopyButton.innerHTML = "Save Copy"
+        this.div.appendChild(this.overwriteButton)
+        this.div.appendChild(this.saveCopyButton)
+
+        this.overwriteButton.onclick = e => {
+            this.post()
+        }
+        this.overwriteButton.onclick = e => {
+            delete song.data.id
+            this.post()
+        }
+    }
+    else {
+        this.saveButton = document.createElement("button")
+        this.saveButton.innerHTML = "Save"
+        this.div.appendChild(this.saveButton)
+
+        this.saveButton.onclick = e => {
+            this.post()
+        }
+    }
+
+}
+
+SaveFragment.prototype.post = function () {
+    
+    this.song.data.name = this.nameInput.value
+    this.song.data.tags = this.tagsInput.value
+    this.song.data.btc_address = this.btcInput.value
+
+    var data = this.song.getData()
+    omg.server.post(data, res => {
+        console.log(res)
+
+        // show saved
+        // timeout close
+    })
+}
+
+function OpenFragment(callback) {
+    this.div = document.createElement("div")
+    var types = ["SONG"]
+    this.searchBox = new OMGSearchBox({
+        div: this.div,
+        types
+    })
+    this.searchBox.search()
+}

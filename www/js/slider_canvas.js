@@ -98,7 +98,7 @@ SliderCanvas.prototype.onnewX = function (x, y) {
 SliderCanvas.prototype.onupdate = function (value) {
     if (this.audioNode) {
         if (this.isAudioParam) {
-            this.audioNode[this.controlInfo.property].setValueAtTime(value, omg.audioContext.currentTime);
+            this.audioNode[this.controlInfo.property].setValueAtTime(value, window.omgmusic.audioContext.currentTime);
         }
         else {
             this.audioNode[this.controlInfo.property] = value;

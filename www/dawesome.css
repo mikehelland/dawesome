@@ -19,6 +19,10 @@ iframe {
     width: 100%;
 }
 
+a, a:visited {
+    color:white;
+}
+
 .beat-marker {
     position:absolute;
     background-color:#4fa5d5;
