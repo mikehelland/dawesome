@@ -19,19 +19,20 @@ function Dawesome(config) {
         this.setupMenu()
     }
 
-    this.setupTransport()
-    this.setupTimeline()
-    this.setupMixer()
-
-    this.loadSong()
-
-    this.transport.updateBeats()
-    this.transport.updateKey()
+    this.load()
 
 }
 
-Dawesome.prototype.loadSong = function () {
-    var defaultSong;
+Dawesome.prototype.load = function (data) {
+    this.wm.clearAll()
+    this.setupTransport()
+    this.setupTimeline()
+    this.setupMixer()
+    this.loadSong(data)
+}
+
+Dawesome.prototype.loadSong = function (data) {
+    /*var defaultSong;
     var blank
     if (blank) {
         defaultSong = JSON.parse("{\"name\":\"\",\"type\":\"SONG\",\"sections\":[{\"name\":\"Intro\",\"type\":\"SECTION\",\"parts\":[],\"chordProgression\":[0]}],\"keyParams\":{\"scale\":[0,2,4,5,7,9,11],\"rootNote\":0},\"beatParams\":{\"bpm\":120,\"beats\":4,\"shuffle\":0,\"measures\":1,\"subbeats\":4}}")
@@ -39,19 +40,29 @@ Dawesome.prototype.loadSong = function () {
     else {
         defaultSong = JSON.parse("{\"fx\":[],\"name\":\"default\",\"type\":\"SONG\",\"sections\":[{\"name\":\"Intro\",\"type\":\"SECTION\",\"parts\":[{\"fx\":[],\"type\":\"PART\",\"notes\":[],\"surface\":{\"url\":\"PRESET_VERTICAL\",\"skipTop\":10,\"skipBottom\":15},\"soundSet\":{\"url\":\"PRESET_OSC_SINE\",\"name\":\"Sine Oscillator\",\"type\":\"SOUNDSET\",\"octave\":5,\"lowNote\":0,\"highNote\":108,\"chromatic\":true},\"audioParams\":{\"pan\":-0.5654761904761905,\"gain\":0.24350787067584123,\"warp\":1,\"volume\":0.18825301204819278,\"delayTime\":0.3187702265372168,\"delayLevel\":0.45307443365695793}},{\"fx\":[],\"type\":\"PART\",\"tracks\":[{\"url\":\"hh_kick\",\"data\":[1,0,0,0,0,0,0,0,0,0,0,0,0],\"name\":\"Kick\",\"sound\":\"http://mikehelland.com/omg/drums/hh_kick.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_clap\",\"data\":[0,0,0,0,0,0,0,0,0,0,0,0,0],\"name\":\"Clap\",\"sound\":\"http://mikehelland.com/omg/drums/hh_clap.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"rock_hihat_closed\",\"data\":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0],\"name\":\"HiHat Closed\",\"sound\":\"http://mikehelland.com/omg/drums/rock_hihat_closed.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_hihat\",\"data\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"name\":\"HiHat Open\",\"sound\":\"http://mikehelland.com/omg/drums/hh_hihat.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_tamb\",\"data\":[],\"name\":\"Tambourine\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tamb.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_tom_mh\",\"data\":[0,0,0,0,0,0,0,0,0,0,0,0,0,false],\"name\":\"Tom H\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_mh.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_tom_ml\",\"data\":[0,0,0,0,0,0,0,0,0,0,0],\"name\":\"Tom M\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_ml.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}},{\"url\":\"hh_tom_l\",\"data\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"name\":\"Tom L\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_l.mp3\",\"audioParams\":{\"pan\":0,\"gain\":1,\"warp\":1}}],\"surface\":{\"url\":\"PRESET_SEQUENCER\"},\"soundSet\":{\"id\":1207,\"url\":\"http://openmusic.gallery/data/1207\",\"data\":[{\"url\":\"hh_kick\",\"name\":\"Kick\",\"sound\":\"http://mikehelland.com/omg/drums/hh_kick.mp3\"},{\"url\":\"hh_clap\",\"name\":\"Clap\",\"sound\":\"http://mikehelland.com/omg/drums/hh_clap.mp3\"},{\"url\":\"rock_hihat_closed\",\"name\":\"HiHat Closed\",\"sound\":\"http://mikehelland.com/omg/drums/rock_hihat_closed.mp3\"},{\"url\":\"hh_hihat\",\"name\":\"HiHat Open\",\"sound\":\"http://mikehelland.com/omg/drums/hh_hihat.mp3\"},{\"url\":\"hh_tamb\",\"name\":\"Tambourine\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tamb.mp3\"},{\"url\":\"hh_tom_mh\",\"name\":\"Tom H\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_mh.mp3\"},{\"url\":\"hh_tom_ml\",\"name\":\"Tom M\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_ml.mp3\"},{\"url\":\"hh_tom_l\",\"name\":\"Tom L\",\"sound\":\"http://mikehelland.com/omg/drums/hh_tom_l.mp3\"}],\"name\":\"Hip Kit\",\"type\":\"SOUNDSET\",\"prefix\":\"http://mikehelland.com/omg/drums/\",\"lowNote\":72,\"postfix\":\".mp3\",\"user_id\":\"1\",\"approved\":true,\"username\":\"m                   \",\"chromatic\":false,\"created_at\":1542271035794,\"last_modified\":1542271055684,\"defaultSurface\":\"PRESET_SEQUENCER\"},\"audioParams\":{\"pan\":0,\"gain\":0.7228178904703554,\"warp\":1,\"volume\":0.6,\"delayTime\":0.09870550161812297,\"delayLevel\":0.12297734627831715}}],\"chordProgression\":[0]}],\"keyParams\":{\"scale\":[0,2,3,5,7,8,10],\"rootNote\":9},\"beatParams\":{\"bpm\":108,\"beats\":4,\"shuffle\":0,\"measures\":1,\"subbeats\":4},\"created_at\":1547004419230,\"last_modified\":1547004419230}")
     }
-    /*    fetch("/data/" + id).then(function (response) {
+        fetch("/data/" + id).then(function (response) {
             response.json().then(data => callback(data));
         });
     */
-
-    this.song = new OMGSong() //defaultSong
+    this.player = new OMusicPlayer()
+    this.player.loadFullSoundSets = true
+   
+    this.song = new OMGSong(data) //defaultSong
     this.player.prepareSong(this.song)
-    this.section = this.song.addSection({name: "Intro"})
+
+    this.section = Object.values(this.song.sections)[0]
+    if (!this.section) {
+        this.section = this.song.addSection({name: "Intro"})
+    }
     
     this.loadTimeline()
     this.loadMixer()
 
     this.setupSongListeners()
+
+    this.transport.updateBeats()
+    this.transport.updateKey()
+
 }
 
 Dawesome.prototype.setupTransport = function () {
@@ -162,18 +173,22 @@ Dawesome.prototype.setupTimeline = function () {
     this.timeline.beatMarker = document.createElement("div")
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
     this.timeline.beatMarker.style.top = this.timeline.headersHeaderDiv.clientHeight + "px"
-    this.player.onBeatPlayedListeners.push((isubbeat, section) => {
-        this.timeline.beatMarker.style.left = section.timelineDiv.offsetLeft +
-                                            //this.timeline.headerWidth + 
-                                            (isubbeat === -1 ? 0 : isubbeat) * 
-                                            this.timeline.subbeatLength + "px"
-    })
     this.timeline.beatMarker.style.left = this.timeline.headerWidth + "px"
     this.timeline.beatMarker.style.display = "block"
     this.timeline.beatMarker.style.height = "100%"
     this.timeline.beatMarker.className = "beat-marker"
-    //this.beatMarker.style.height = "100%"
     this.timeline.div.appendChild(this.timeline.beatMarker)
+
+    this.timeline.scrollBarX = {startPercent: 0}
+    this.timeline.scrollBarX.div = document.createElement("div")
+    this.timeline.scrollBarX.div.className = "daw-timeline-horizontal-scrollbar"
+    this.timeline.scrollBarX.div.style.left = this.timeline.headerWidth + "px"
+    this.timeline.div.appendChild(this.timeline.scrollBarX.div)
+    this.timeline.scrollBarX.canvas = document.createElement("canvas")
+    this.timeline.scrollBarX.canvas.className = "daw-timeline-horizontal-scrollbar-canvas"
+    this.timeline.scrollBarX.div.appendChild(this.timeline.scrollBarX.canvas)
+    this.timeline.scrollBarX.context = this.timeline.scrollBarX.canvas.getContext("2d")
+    this.setupScrollBarEvents(this.timeline.scrollBarX)
 }
 
 Dawesome.prototype.setupMixer = function () {
@@ -192,12 +207,19 @@ Dawesome.prototype.loadTimeline = function () {
     }
 
     this.timeline.partHeaders = {}
+    this.timeline.sectionDivs = []
 
     this.timeline.subbeatLength = this.timeline.measureWidth / 
                                 (this.song.data.beatParams.subbeats * 
                                 this.song.data.beatParams.beats)
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
-
+    this.player.onBeatPlayedListeners.push((isubbeat, section) => {
+        this.timeline.beatMarker.style.left = section.timelineDiv.offsetLeft +
+                                            //this.timeline.headerWidth + 
+                                            (isubbeat === -1 ? 0 : isubbeat) * 
+                                            this.timeline.subbeatLength + "px"
+    })
+    
     this.timeline.sectionWidthUsed = 0
     var firstSection = true
     for (var sectionName in this.song.sections) {
@@ -220,6 +242,8 @@ Dawesome.prototype.loadTimeline = function () {
         this.addSectionPartsToTimeline(section)
         firstSection = false
     }
+
+    this.refreshTimelineScrollBars()
 }
 
 
@@ -228,13 +252,8 @@ Dawesome.prototype.loadMixer = function () {
     this.mixer.div.innerHTML = ""
     this.mixer.visibleMeters = []
     
-    if (!this.section || this.section.parts.length === 0) {
-        // TODO show empty?
-        return 
-    }
-
-    for (var i = 0; i < this.section.parts.length; i++) {
-        this.addMixerChannel(this.section.parts[i])
+    for (var partName in this.song.parts) {
+        this.addMixerChannel(this.song.parts[partName])
     }
 
 }
@@ -333,6 +352,8 @@ Dawesome.prototype.addTimelineSection = function (section) {
     section.timelineCaptionDiv = captionDiv
     var measures = 1 // TODO from song or section
     div.style.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed + "px"
+    
+    this.timeline.sectionDivs.push({div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed})
     this.timeline.sectionWidthUsed += measures * this.timeline.measureWidth
 
 }
@@ -414,8 +435,9 @@ Dawesome.prototype.addSection = function () {
     }
 
     this.addTimelineSection(newSection)
-    
     this.addSectionPartsToTimeline(newSection);
+    this.refreshTimelineScrollBars()
+
     return newSection;
 }
 
@@ -513,14 +535,17 @@ Dawesome.prototype.setupMenu = function () {
     this.wm.showMainMenu({
         items: [
             {name: "File", items: [
-                {name: "New", onclick: () => this.new()},
-                {name: "Open", onclick: () => this.open()},
-                {name: "Save", onclick: () => this.save()}
+                {name: "New", onclick: () => this.newSong()},
+                {name: "Open", onclick: () => this.showOpenWindow()},
+                {name: "Save", onclick: () => this.showSaveWindow()}
             ]},
             {name: "Window", items: [
                 {name: "Transport", onclick: () => this.newSong()},
                 {name: "Timeline", onclick: () => this.newSong()},
                 {name: "Mixer", onclick: () => this.newSong()},
+                {separator: true},
+                {name: "FX", onclick: () => this.newSong()},
+                {name: "Arrangement", onclick: () => this.newSong()},
                 {separator: true},
                 {name: "Live Collaboration", onclick: () => this.newSong()},
                 {name: "Remote Controls", onclick: () => this.newSong()},
@@ -534,7 +559,7 @@ Dawesome.prototype.setupMenu = function () {
 
 }
 
-Dawesome.prototype.save = function () {
+Dawesome.prototype.showSaveWindow = function () {
     var f = new SaveFragment(this.song)
 
     this.wm.showFragment(f, {
@@ -544,13 +569,86 @@ Dawesome.prototype.save = function () {
     })
 }
 
-Dawesome.prototype.open = function () {
-    var f = new OpenFragment()
+Dawesome.prototype.showOpenWindow = function () {
+    var f = new OpenFragment(viewer => {
+        console.log(viewer.data)
+
+        if (this.player.playing) {
+            this.player.stop()
+        }
+
+        this.load(viewer.data)
+        
+    })
 
     this.wm.showFragment(f, {
         caption: "Open",
         height: 450,
         width: 600,
-        overflowY: "scroll"
+        overflowY: "scroll",
     })
+}
+
+Dawesome.prototype.newSong = function () {
+    // todo check to save!
+    this.load()
+}
+
+Dawesome.prototype.refreshTimelineScrollBars = function () {
+    
+    if (this.timeline.div.clientWidth - this.timeline.headerWidth < this.timeline.sectionWidthUsed) {
+        this.timeline.scrollBarX.div.style.display = "block"
+        this.timeline.scrollBarX.canvas.width = this.timeline.scrollBarX.canvas.clientWidth
+        this.timeline.scrollBarX.canvas.height = this.timeline.scrollBarX.canvas.clientHeight
+        this.timeline.scrollBarX.context.fillStyle = "#404040"
+        this.timeline.scrollBarX.context.fillRect(0, 0, this.timeline.scrollBarX.canvas.width, this.timeline.scrollBarX.canvas.height)
+        this.timeline.scrollBarX.context.fillStyle = "#888888"
+        this.timeline.scrollBarX.widthPercent = this.timeline.scrollBarX.canvas.width / this.timeline.sectionWidthUsed
+        this.timeline.scrollBarX.context.fillRect(
+            this.timeline.scrollBarX.startPercent * this.timeline.scrollBarX.canvas.width, 
+            0, 
+            this.timeline.scrollBarX.widthPercent * this.timeline.scrollBarX.canvas.width, 
+            this.timeline.scrollBarX.canvas.height)
+
+    }
+    else {
+        this.timeline.scrollBarX.div.style.display = "none"
+    }
+}
+
+Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
+
+    scrollBar.canvas.onmousedown = e => {
+        scrollBar.offsets = omg.ui.totalOffsets(scrollBar.canvas);
+        scrollBar.startX = e.clientX //- scrollBar.offsets.left
+        scrollBar.isTouching = true
+    }
+
+    // this works when there's only a couple sections, otherwise too short
+    scrollBar.canvas.onmousemove = e => {
+        if (scrollBar.isTouching) {
+            //var dx = (e.clientX - scrollBar.offsets.left) - scrollBar.startX 
+            var dx = e.clientX - scrollBar.startX 
+            scrollBar.startPercent = Math.min(1 - scrollBar.widthPercent, Math.max(0, scrollBar.startPercent + dx / scrollBar.div.clientWidth))
+            scrollBar.startX = e.clientX// - scrollBar.offsets.left
+            this.moveTimeline(scrollBar.startPercent / (scrollBar.widthPercent), 0)
+            this.refreshTimelineScrollBars()
+        }
+    }
+
+    scrollBar.canvas.onmouseleave = e => {
+        scrollBar.isTouching = false
+    }
+    scrollBar.canvas.onmouseup = e => {
+        scrollBar.isTouching = false
+    }
+
+}
+
+Dawesome.prototype.moveTimeline = function (x, y) {
+    for (var section in this.timeline.sectionDivs) {
+        this.timeline.sectionDivs[section].div.style.left = 
+            this.timeline.sectionDivs[section].left - x * 
+            this.timeline.scrollBarX.div.clientWidth + "px"
+    }
 }

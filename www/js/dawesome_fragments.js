@@ -446,7 +446,8 @@ function OpenFragment(callback) {
     var types = ["SONG"]
     this.searchBox = new OMGSearchBox({
         div: this.div,
-        types
+        types,
     })
+    this.searchBox.onclickcontent = callback
     this.searchBox.search()
 }
