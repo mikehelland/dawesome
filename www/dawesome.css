@@ -67,7 +67,7 @@ a, a:visited {
 .daw-timeline {
     position: relative
 }
-.daw-mixer {
+.daw-mixer, .daw-fx {
     display: flex;
 }
 
@@ -159,12 +159,12 @@ a, a:visited {
     height: 100%;
 }
 
-.daw-mixer-volume {
+.daw-mixer-volume, .daw-fx-list {
     background-color: #202020;
     flex-grow: 1;
     position: relative;
 }
-.daw-mixer-pan {
+.daw-mixer-pan, .daw-fx-warp {
     height: 25px;
     background-color: #202020;
     border-bottom: 1px solid gray;
@@ -174,7 +174,22 @@ a, a:visited {
     overflow: hidden;
 }
 
+.daw-fx-add, .daw-fx-button {
+    text-align: center;
+    padding: 4px;
+    border: 1px solid gray;
+    border-radius: 2px;
+    margin:1px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+.daw-fx-add:hover, .daw-fx-button:hover {
+    opacity: 1;
+}
 
+.daw-fx-button {
+    background-color: darkgreen;
+}
 
 .daw-add-part-search-result {
     padding:6px;

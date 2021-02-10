@@ -1,3 +1,5 @@
+"use strict";
+
 function BeatParamsFragment(song) {
 
     this.div = document.createElement("div")
@@ -450,4 +452,60 @@ function OpenFragment(callback) {
     })
     this.searchBox.onclickcontent = callback
     this.searchBox.search()
+}
+
+function FXFragment(fx, part) {
+    this.fx = fx
+
+    this.div = document.createElement("div");
+    this.div.className = "fx-controls";
+    
+    this.setupFXControls(fx, part, this.div);
+    
+    var tools = document.createElement("div");
+    tools.className = "fx-controls-tools";
+    this.div.appendChild(tools);
+    var bypassButton = document.createElement("div");
+    bypassButton.innerHTML = "Bypass FX";
+    bypassButton.onclick = function () {
+        fx.bypass = !fx.bypass ? 1 : 0;
+        fx.data.bypass = fx.bypass ? 1 : 0;
+        bypassButton.classList.toggle("selected-option");
+    };
+    var removeButton = document.createElement("div");
+    removeButton.innerHTML = "Remove FX";
+    removeButton.onclick = function () {
+        fxListDiv.removeChild(this.div);
+        tg.player.removeFXFromPart(fx, part);
+    };
+    tools.appendChild(bypassButton);
+    tools.appendChild(removeButton);
+    
+    if (fx.bypass) {
+        bypassButton.classList.add("selected-option");
+    }
+};
+
+FXFragment.prototype.setupFXControls = function (fx, part, fxDiv) {
+
+    var controls = fx.controls;
+    var divs = [];
+    controls.forEach(function (control) {        
+        var canvas = document.createElement("canvas");
+        canvas.className = "fx-slider";
+        fxDiv.appendChild(canvas);
+        var div = new SliderCanvas(canvas, control, fx.node, fx.data, (value) => {
+            var changes = {}
+            changes[control.property] = value
+            part.song.fxChanged(changes, part, fx)
+        });
+        divs.push(div);
+    });
+    fx.controlDivs = divs;
+}
+
+FXFragment.prototype.onshow = function () {
+    this.fx.controlDivs.forEach((div) => {
+        div.sizeCanvas();
+    });
 }

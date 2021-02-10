@@ -11,9 +11,10 @@ function Dawesome(config) {
     
     this.wm = new OMGWindowManager(config)
 
-    this.transportWindowConfig = config.transportWindowConfig || {caption: "Transport", width: 600, height: 80, x: 0, y: 0}
-    this.timelineWindowConfig = config.timelineWindowConfig || {caption: "Timeline", width: window.innerWidth - 5, height: 480, x: 0, y: 80}
+    this.transportWindowConfig = config.transportWindowConfig || {caption: "Transport", width: 600, height: 80, x: 5, y: 5}
+    this.timelineWindowConfig = config.timelineWindowConfig || {caption: "Timeline", width: window.innerWidth - 15, height: 480, x: 5, y: 90}
     this.mixerWindowConfig = config.mixerWindowConfig || {caption: "Mixer", width: 500, height: 300, x: 17, y: window.innerHeight - 340}
+    this.fxWindowConfig = config.fxWindowConfig || {caption: "FX", width: 500, height: 300, x: 557, y: window.innerHeight - 340}
 
     if (config.showMainMenu) {
         this.setupMenu()
@@ -28,6 +29,7 @@ Dawesome.prototype.load = function (data) {
     this.setupTransport()
     this.setupTimeline()
     this.setupMixer()
+    this.setupFX()
     this.loadSong(data)
 }
 
@@ -199,6 +201,15 @@ Dawesome.prototype.setupMixer = function () {
 
 }
 
+
+Dawesome.prototype.setupFX = function () {
+    this.fx = {}
+    this.fx.window = this.wm.newWindow(this.fxWindowConfig)
+    this.fx.div = this.fx.window.contentDiv
+    this.fx.div.classList.add("daw-fx")
+
+}
+
 Dawesome.prototype.loadTimeline = function () {
     
     if (this.song.sections.length === 0) {
@@ -254,6 +265,7 @@ Dawesome.prototype.loadMixer = function () {
     
     for (var partName in this.song.parts) {
         this.addMixerChannel(this.song.parts[partName])
+        this.addFXChannel(this.song.parts[partName])
     }
 
 }
@@ -299,6 +311,65 @@ Dawesome.prototype.addMixerChannel = function (part) {
             this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
         }
     }*/
+}
+
+Dawesome.prototype.addFXChannel = function (part) {
+    var div = document.createElement("div")
+    div.className = "daw-mixer-channel"
+
+    var caption = document.createElement("div")
+    caption.innerHTML = part.data.name
+    caption.className = "daw-mixer-caption"
+
+    var listDiv = document.createElement("div")
+    listDiv.className = "daw-fx-list"
+    
+    var warpCanvas = document.createElement("canvas")
+    warpCanvas.className = "daw-fx-warp"
+
+    var addButton = document.createElement("div")
+    addButton.className = "daw-fx-add"
+    addButton.innerHTML = "+"
+
+    listDiv.appendChild(addButton)
+
+    div.appendChild(warpCanvas)
+    div.appendChild(listDiv)
+    div.appendChild(caption)
+
+    this.fx.div.appendChild(div)
+
+    var prop = {"property": "warp", "name": "warp", "type": "slider", "min": 0, "max": 2, resetValue: 0, "color": "#008000"};
+    var warpSlider = new SliderCanvas(warpCanvas, prop, part.panner, part.data.audioParams, onchange);
+
+    warpSlider.sizeCanvas()
+
+    part.fx.forEach(fx => {
+        var fxDiv = document.createElement("div")
+        fxDiv.innerHTML = fx.data.name
+        fxDiv.className = "daw-fx-button"
+        listDiv.appendChild(fxDiv)
+
+        fxDiv.onclick = e => {
+            this.showFXDetail(fx, part)
+        }
+    })
+
+    addButton.onclick = e => {
+        var fxMenu = []
+        for (var fx in this.player.fxFactory.fx) {
+            fxMenu.push({name: fx, onclick: () => {
+                    this.addFXToPart(fx, part)
+                }
+            })
+        }
+        this.wm.showSubMenu({
+            div: addButton, 
+            items: fxMenu,
+            toTheRight: true
+        })
+    }
+
 }
 
 Dawesome.prototype.addTimelinePartHeader = function (part) {
@@ -473,6 +544,7 @@ Dawesome.prototype.addPart = function (data) {
     headPart.daw = {}
 
     this.addMixerChannel(headPart)
+    this.addFXChannel(headPart)
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
 
@@ -535,21 +607,27 @@ Dawesome.prototype.setupMenu = function () {
     this.wm.showMainMenu({
         items: [
             {name: "File", items: [
+                {name: "User", onclick: () => this.showUserWindow()},
+                {separator: true},
                 {name: "New", onclick: () => this.newSong()},
                 {name: "Open", onclick: () => this.showOpenWindow()},
-                {name: "Save", onclick: () => this.showSaveWindow()}
+                {name: "Save", onclick: () => this.showSaveWindow()},
+                {separator: true},
+                {name: "Settings", onclick: () => this.showSettingsWindow()},
+                {separator: true},
+                {name: "OMG Home", onclick: () => this.showSaveWindow()}
             ]},
             {name: "Window", items: [
-                {name: "Transport", onclick: () => this.newSong()},
-                {name: "Timeline", onclick: () => this.newSong()},
-                {name: "Mixer", onclick: () => this.newSong()},
+                {name: "Transport", onclick: () => this.showTransportWindow()},
+                {name: "Timeline", onclick: () => this.showTimelineWindow()},
+                {name: "Mixer", onclick: () => this.showMixerWindow()},
                 {separator: true},
-                {name: "FX", onclick: () => this.newSong()},
-                {name: "Arrangement", onclick: () => this.newSong()},
+                {name: "FX", onclick: () => this.showFXWindow()},
+                {name: "Arrangement", onclick: () => this.showArrangementWindow()},
                 {separator: true},
-                {name: "Live Collaboration", onclick: () => this.newSong()},
-                {name: "Remote Controls", onclick: () => this.newSong()},
-                {name: "Monkey Randomizer", onclick: () => this.newSong()}
+                {name: "Live Collaboration", onclick: () => this.showLiveWindow()},
+                {name: "Remote Controls", onclick: () => this.showRemoveControlsWindow()},
+                {name: "Monkey Randomizer", onclick: () => this.showRandomizerWindow()}
             ]},
             {name: "Help", items: [
             ]}
@@ -651,4 +729,35 @@ Dawesome.prototype.moveTimeline = function (x, y) {
             this.timeline.sectionDivs[section].left - x * 
             this.timeline.scrollBarX.div.clientWidth + "px"
     }
+}
+
+Dawesome.prototype.showTransportWindow = function (x, y) {
+
+}
+Dawesome.prototype.showTimelineWindow = function (x, y) {
+
+}
+Dawesome.prototype.showMixerWindow = function (x, y) {
+
+}
+
+Dawesome.prototype.showFXWindow = function (x, y) {
+
+}
+Dawesome.prototype.showTimelineWindow = function (x, y) {
+
+}
+Dawesome.prototype.showMixerWindow = function (x, y) {
+
+}
+
+Dawesome.prototype.showFXDetail = function (fx, part) {
+    var f = new FXFragment(fx, part)
+
+    this.wm.showFragment(f, {
+        caption: fx.data.name + " - " + part.data.name,
+        height: 300,
+        width: 300
+    })
+
 }
