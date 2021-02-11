@@ -190,6 +190,25 @@ a, a:visited {
 .daw-fx-button {
     background-color: darkgreen;
 }
+.daw-fx-tools {
+    display: flex;
+    width: 100%;
+}
+.daw-fx-tool {
+    text-align: center;
+    padding: 12px;
+    flex-grow: 1;
+    cursor: pointer;
+    opacity: 0.7;
+}
+.daw-fx-tool:hover {
+    opacity: 1;
+}
+
+.daw-selected-option {
+    background-color:#000044 !important;
+}
+
 
 .daw-add-part-search-result {
     padding:6px;

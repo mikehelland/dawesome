@@ -29,8 +29,9 @@ Dawesome.prototype.load = function (data) {
     this.setupTransport()
     this.setupTimeline()
     this.setupMixer()
-    this.setupFX()
     this.loadSong(data)
+
+    this.showFXWindow()
 }
 
 Dawesome.prototype.loadSong = function (data) {
@@ -202,14 +203,6 @@ Dawesome.prototype.setupMixer = function () {
 }
 
 
-Dawesome.prototype.setupFX = function () {
-    this.fx = {}
-    this.fx.window = this.wm.newWindow(this.fxWindowConfig)
-    this.fx.div = this.fx.window.contentDiv
-    this.fx.div.classList.add("daw-fx")
-
-}
-
 Dawesome.prototype.loadTimeline = function () {
     
     if (this.song.sections.length === 0) {
@@ -265,7 +258,6 @@ Dawesome.prototype.loadMixer = function () {
     
     for (var partName in this.song.parts) {
         this.addMixerChannel(this.song.parts[partName])
-        this.addFXChannel(this.song.parts[partName])
     }
 
 }
@@ -313,64 +305,6 @@ Dawesome.prototype.addMixerChannel = function (part) {
     }*/
 }
 
-Dawesome.prototype.addFXChannel = function (part) {
-    var div = document.createElement("div")
-    div.className = "daw-mixer-channel"
-
-    var caption = document.createElement("div")
-    caption.innerHTML = part.data.name
-    caption.className = "daw-mixer-caption"
-
-    var listDiv = document.createElement("div")
-    listDiv.className = "daw-fx-list"
-    
-    var warpCanvas = document.createElement("canvas")
-    warpCanvas.className = "daw-fx-warp"
-
-    var addButton = document.createElement("div")
-    addButton.className = "daw-fx-add"
-    addButton.innerHTML = "+"
-
-    listDiv.appendChild(addButton)
-
-    div.appendChild(warpCanvas)
-    div.appendChild(listDiv)
-    div.appendChild(caption)
-
-    this.fx.div.appendChild(div)
-
-    var prop = {"property": "warp", "name": "warp", "type": "slider", "min": 0, "max": 2, resetValue: 0, "color": "#008000"};
-    var warpSlider = new SliderCanvas(warpCanvas, prop, part.panner, part.data.audioParams, onchange);
-
-    warpSlider.sizeCanvas()
-
-    part.fx.forEach(fx => {
-        var fxDiv = document.createElement("div")
-        fxDiv.innerHTML = fx.data.name
-        fxDiv.className = "daw-fx-button"
-        listDiv.appendChild(fxDiv)
-
-        fxDiv.onclick = e => {
-            this.showFXDetail(fx, part)
-        }
-    })
-
-    addButton.onclick = e => {
-        var fxMenu = []
-        for (var fx in this.player.fxFactory.fx) {
-            fxMenu.push({name: fx, onclick: () => {
-                    this.addFXToPart(fx, part)
-                }
-            })
-        }
-        this.wm.showSubMenu({
-            div: addButton, 
-            items: fxMenu,
-            toTheRight: true
-        })
-    }
-
-}
 
 Dawesome.prototype.addTimelinePartHeader = function (part) {
 
@@ -544,7 +478,7 @@ Dawesome.prototype.addPart = function (data) {
     headPart.daw = {}
 
     this.addMixerChannel(headPart)
-    this.addFXChannel(headPart)
+
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
 
@@ -731,28 +665,32 @@ Dawesome.prototype.moveTimeline = function (x, y) {
     }
 }
 
-Dawesome.prototype.showTransportWindow = function (x, y) {
+Dawesome.prototype.showTransportWindow = function () {
 
 }
-Dawesome.prototype.showTimelineWindow = function (x, y) {
+Dawesome.prototype.showTimelineWindow = function () {
 
 }
-Dawesome.prototype.showMixerWindow = function (x, y) {
+Dawesome.prototype.showMixerWindow = function () {
 
 }
 
-Dawesome.prototype.showFXWindow = function (x, y) {
+Dawesome.prototype.showFXWindow = function () {
+    var f = new FXFragment(this)
+    
+    this.wm.showFragment(f, this.fxWindowConfig)
 
 }
-Dawesome.prototype.showTimelineWindow = function (x, y) {
+
+Dawesome.prototype.showTimelineWindow = function () {
 
 }
-Dawesome.prototype.showMixerWindow = function (x, y) {
+Dawesome.prototype.showMixerWindow = function () {
 
 }
 
 Dawesome.prototype.showFXDetail = function (fx, part) {
-    var f = new FXFragment(fx, part)
+    var f = new FXDetailFragment(fx, part, this.player)
 
     this.wm.showFragment(f, {
         caption: fx.data.name + " - " + part.data.name,

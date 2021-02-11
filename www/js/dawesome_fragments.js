@@ -454,39 +454,149 @@ function OpenFragment(callback) {
     this.searchBox.search()
 }
 
-function FXFragment(fx, part) {
+function FXFragment(daw) {
+    this.daw = daw
+    this.player = daw.player
+    this.song = daw.song
+    this.wm = daw.wm
+
+    this.partDivs = new Map()
+
+    this.div = document.createElement("div");
+    this.div.className = "daw-fx"
+
+    for (var partName in this.song.parts) {
+        this.addFXChannel(this.song.parts[partName])
+    }
+
+
+    this.fxChangeListener = (action, part, fx) => {
+        if (action === "remove" || action === "add") {
+            var partDiv = this.partDivs.get(part)
+            this.loadChannelFXList(part, partDiv.listDiv)
+        }
+    }
+    this.addPartListener = (part) => {
+        this.addFXChannel(this.song.parts[part])
+    }
+    this.song.onFXChangeListeners.push(this.fxChangeListener)
+    this.song.onPartAddListeners.push(this.addPartListener)
+
+}
+
+FXFragment.prototype.addFXChannel = function (part) {
+    var div = document.createElement("div")
+    div.className = "daw-mixer-channel"
+
+    var caption = document.createElement("div")
+    caption.innerHTML = part.data.name
+    caption.className = "daw-mixer-caption"
+
+    var listDiv = document.createElement("div")
+    listDiv.className = "daw-fx-list"
+    
+    var warpCanvas = document.createElement("canvas")
+    warpCanvas.className = "daw-fx-warp"
+
+    var addButton = document.createElement("div")
+    addButton.className = "daw-fx-add"
+    addButton.innerHTML = "+"
+
+    div.appendChild(warpCanvas)
+    div.appendChild(addButton)
+    div.appendChild(listDiv)
+    div.appendChild(caption)
+
+    this.div.appendChild(div)
+
+    var prop = {"property": "warp", "name": "warp", "type": "slider", "min": 0, "max": 2, resetValue: 0, "color": "#008000"};
+    var warpSlider = new SliderCanvas(warpCanvas, prop, part.panner, part.data.audioParams, onchange);
+
+    warpSlider.sizeCanvas()
+
+    this.partDivs.set(part, {div, listDiv})
+
+    this.loadChannelFXList(part, listDiv)
+
+    addButton.onclick = e => {
+        var fxMenu = []
+        for (let fxName in this.player.fxFactory.fx) {
+            fxMenu.push({name: fxName, onclick: () => {
+                    var fx = this.player.addFXToPart(fxName, part)
+                    /*console.log(fx)
+                    var fxDiv = document.createElement("div")
+                    fxDiv.innerHTML = fx.data.name
+                    fxDiv.className = "daw-fx-button"
+                    listDiv.appendChild(fxDiv)
+
+                    fxDiv.onclick = e => {
+                        this.daw.showFXDetail(fx, part)
+                    }*/
+                    this.daw.showFXDetail(fx, part)        
+                }
+            })
+        }
+        this.wm.showSubMenu({
+            div: addButton, 
+            items: fxMenu,
+            toTheRight: true
+        })
+    }
+
+}
+
+FXFragment.prototype.loadChannelFXList = function (part, listDiv) {
+    listDiv.innerHTML = ""
+    part.fx.forEach(fx => {
+        this.loadChannelFX(part, fx, listDiv)
+    })
+}
+FXFragment.prototype.loadChannelFX = function (part, fx, listDiv) {
+    var fxDiv = document.createElement("div")
+    fxDiv.innerHTML = fx.data.name
+    fxDiv.className = "daw-fx-button"
+    listDiv.appendChild(fxDiv)
+
+    fxDiv.onclick = e => {
+        this.daw.showFXDetail(fx, part)
+    }
+}
+
+function FXDetailFragment(fx, part, player) {
     this.fx = fx
 
     this.div = document.createElement("div");
     this.div.className = "fx-controls";
     
-    this.setupFXControls(fx, part, this.div);
-    
     var tools = document.createElement("div");
-    tools.className = "fx-controls-tools";
+    tools.className = "daw-fx-tools";
     this.div.appendChild(tools);
     var bypassButton = document.createElement("div");
     bypassButton.innerHTML = "Bypass FX";
     bypassButton.onclick = function () {
-        fx.bypass = !fx.bypass ? 1 : 0;
+        fx.node.bypass = !fx.node.bypass ? 1 : 0;
         fx.data.bypass = fx.bypass ? 1 : 0;
-        bypassButton.classList.toggle("selected-option");
+        bypassButton.classList.toggle("daw-selected-option");
     };
+    bypassButton.className = "daw-fx-tool"
     var removeButton = document.createElement("div");
     removeButton.innerHTML = "Remove FX";
-    removeButton.onclick = function () {
-        fxListDiv.removeChild(this.div);
-        tg.player.removeFXFromPart(fx, part);
+    removeButton.onclick = () => {
+        player.removeFXFromPart(fx, part);
+        this.window.close()
     };
+    removeButton.className = "daw-fx-tool"
     tools.appendChild(bypassButton);
     tools.appendChild(removeButton);
     
-    if (fx.bypass) {
-        bypassButton.classList.add("selected-option");
+    this.setupFXControls(fx, part, this.div);
+    
+    if (fx.node.bypass) {
+        bypassButton.classList.add("daw-selected-option");
     }
 };
 
-FXFragment.prototype.setupFXControls = function (fx, part, fxDiv) {
+FXDetailFragment.prototype.setupFXControls = function (fx, part, fxDiv) {
 
     var controls = fx.controls;
     var divs = [];
@@ -504,7 +614,7 @@ FXFragment.prototype.setupFXControls = function (fx, part, fxDiv) {
     fx.controlDivs = divs;
 }
 
-FXFragment.prototype.onshow = function () {
+FXDetailFragment.prototype.onshow = function () {
     this.fx.controlDivs.forEach((div) => {
         div.sizeCanvas();
     });
