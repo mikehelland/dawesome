@@ -1,5 +1,68 @@
 "use strict";
 
+function MixerFragment(daw) {
+    this.daw = daw
+    this.song = daw.song
+    this.div = document.createElement("div")
+    this.div.classList.add("daw-mixer")
+
+    this.visibleMeters = []
+    
+    for (var partName in this.song.parts) {
+        this.addMixerChannel(this.song.parts[partName])
+    }
+
+    this.onPartAddListener = (partName) => {
+        this.addMixerChannel(this.song.parts[partName])
+    }
+    this.song.onPartAddListeners.push(this.onPartAddListener)
+}
+
+
+MixerFragment.prototype.addMixerChannel = function (part) {
+    var channelDiv = document.createElement("div")
+    channelDiv.className = "daw-mixer-channel"
+
+    var caption = document.createElement("div")
+    caption.innerHTML = part.data.name
+    caption.className = "daw-mixer-caption"
+
+    var volumeCanvas = document.createElement("canvas")
+    volumeCanvas.className = "daw-mixer-volume"
+    
+    var panCanvas = document.createElement("canvas")
+    panCanvas.className = "daw-mixer-pan"
+
+    channelDiv.appendChild(panCanvas)
+    channelDiv.appendChild(volumeCanvas)
+    channelDiv.appendChild(caption)
+
+    this.div.appendChild(channelDiv)
+
+    var volumeProperty = {"property": "gain", "name": "", "type": "slider", "min": 0, "max": 1.5, 
+            "color": part.data.audioParams.mute ?"#880000" : "#008800", transform: "square", direction: "vertical"};
+    var volumeSlider = new SliderCanvas(volumeCanvas, volumeProperty, part.gain, part.data.audioParams, onchange);
+
+    var panProperty = {"property": "pan", "name": "", "type": "slider", "min": -1, "max": 1, resetValue: 0, "color": "#000080", hideValue: true};
+    var panSlider = new SliderCanvas(panCanvas, panProperty, part.panner, part.data.audioParams, onchange);
+
+    volumeSlider.sizeCanvas()
+    panSlider.sizeCanvas()
+    
+    /*var meterHolder = document.createElement("div")
+    meterHolder.className = "daw-mixer-meter"
+    volumeHolder.appendChild(meterHolder)
+    if (part.postFXGain) {
+        this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
+    }
+    else {
+        part.onnodesready = () => {
+            this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
+        }
+    }*/
+}
+
+
 function BeatParamsFragment(song) {
 
     this.div = document.createElement("div")

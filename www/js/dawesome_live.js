@@ -67,15 +67,16 @@ LiveFragment.prototype.goLive = function (joinRoom) {
     this.roomname = window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(joinRoom || this.username)
     
     this.song = this.daw.song
+    var data = joinRoom ? null : this.song.getData()
     
     if (!this.daw.rt) {
         this.daw.rt = new OMGRealTime()
         this.daw.rt.onready = () => {
-            this.daw.rt.join(this.roomname, this.username, this.daw.song.getData())
+            this.daw.rt.join(this.roomname, this.username, data)
         }
     }
     else {
-        this.daw.rt.join(this.roomname, this.username, this.daw.song.getData())
+        this.daw.rt.join(this.roomname, this.username, data)
     }
 
     this.daw.rt.onnewuser = (name, user) => {
@@ -93,6 +94,10 @@ LiveFragment.prototype.goLive = function (joinRoom) {
     }
 
     this.daw.rt.onjoined = e => {
+        if (joinRoom && e.thing) {
+            this.daw.load(e.thing)
+            this.song = this.daw.song
+        }
         this.setupListeners()
         
         this.collabLink.value = this.roomname
@@ -246,10 +251,9 @@ LiveFragment.prototype.onPartAudioParamsChangeListener = function (part, source)
 
 LiveFragment.prototype.onPartAddListener = function (part, source) {
     if (source === "omglive") return;
-
     this.emit("SONG", {
         action: "partAdd", 
-        part: part.data,
+        part: this.song.parts[part].data,
     });
 };
 
@@ -338,7 +342,7 @@ LiveFragment.prototype.ondata = function (data) {
         this.song.partMuteChanged(part, "omglive");
     }
     else if (data.action === "partAdd") {
-        tg.addPart(data.part.soundSet, "omglive");
+        this.song.addPart(data.part.soundSet, "omglive");
     }
     else if (data.action === "sequencerChange") {
         let part = tg.currentSection.getPart(data.partName);

@@ -20,12 +20,11 @@ function Dawesome(config) {
         this.setupMenu()
     }
 
-    this.load()
-
     if (config.room) {
-        this.showLiveWindow(config.room)
+        this.joinLiveRoom(config.room)
     }
     else {
+        this.load()
         //this.showWelcomeWindow()
     }
 }
@@ -34,9 +33,9 @@ Dawesome.prototype.load = function (data) {
     this.wm.clearAll()
     this.setupTransport()
     this.setupTimeline()
-    this.setupMixer()
     this.loadSong(data)
 
+    this.showMixerWindow()
     this.showFXWindow()
 }
 
@@ -65,8 +64,7 @@ Dawesome.prototype.loadSong = function (data) {
     }
     
     this.loadTimeline()
-    this.loadMixer()
-
+    
     this.setupSongListeners()
 
     this.transport.updateBeats()
@@ -200,15 +198,6 @@ Dawesome.prototype.setupTimeline = function () {
     this.setupScrollBarEvents(this.timeline.scrollBarX)
 }
 
-Dawesome.prototype.setupMixer = function () {
-    this.mixer = {}
-    this.mixer.window = this.wm.newWindow(this.mixerWindowConfig)
-    this.mixer.div = this.mixer.window.contentDiv
-    this.mixer.div.classList.add("daw-mixer")
-
-}
-
-
 Dawesome.prototype.loadTimeline = function () {
     
     if (this.song.sections.length === 0) {
@@ -254,61 +243,6 @@ Dawesome.prototype.loadTimeline = function () {
     }
 
     this.refreshTimelineScrollBars()
-}
-
-
-Dawesome.prototype.loadMixer = function () {
-    
-    this.mixer.div.innerHTML = ""
-    this.mixer.visibleMeters = []
-    
-    for (var partName in this.song.parts) {
-        this.addMixerChannel(this.song.parts[partName])
-    }
-
-}
-
-Dawesome.prototype.addMixerChannel = function (part) {
-    var channelDiv = document.createElement("div")
-    channelDiv.className = "daw-mixer-channel"
-
-    var caption = document.createElement("div")
-    caption.innerHTML = part.data.name
-    caption.className = "daw-mixer-caption"
-
-    var volumeCanvas = document.createElement("canvas")
-    volumeCanvas.className = "daw-mixer-volume"
-    
-    var panCanvas = document.createElement("canvas")
-    panCanvas.className = "daw-mixer-pan"
-
-    channelDiv.appendChild(panCanvas)
-    channelDiv.appendChild(volumeCanvas)
-    channelDiv.appendChild(caption)
-
-    this.mixer.div.appendChild(channelDiv)
-
-    var volumeProperty = {"property": "gain", "name": "", "type": "slider", "min": 0, "max": 1.5, 
-            "color": part.data.audioParams.mute ?"#880000" : "#008800", transform: "square", direction: "vertical"};
-    var volumeSlider = new SliderCanvas(volumeCanvas, volumeProperty, part.gain, part.data.audioParams, onchange);
-
-    var panProperty = {"property": "pan", "name": "", "type": "slider", "min": -1, "max": 1, resetValue: 0, "color": "#000080", hideValue: true};
-    var panSlider = new SliderCanvas(panCanvas, panProperty, part.panner, part.data.audioParams, onchange);
-
-    volumeSlider.sizeCanvas()
-    panSlider.sizeCanvas()
-    
-    /*var meterHolder = document.createElement("div")
-    meterHolder.className = "daw-mixer-meter"
-    volumeHolder.appendChild(meterHolder)
-    if (part.postFXGain) {
-        this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
-    }
-    else {
-        part.onnodesready = () => {
-            this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
-        }
-    }*/
 }
 
 
@@ -482,8 +416,6 @@ Dawesome.prototype.addPart = function (data) {
     
     this.player.loadPart(headPart)
     headPart.daw = {}
-
-    this.addMixerChannel(headPart)
 
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
@@ -678,7 +610,8 @@ Dawesome.prototype.showTimelineWindow = function () {
 
 }
 Dawesome.prototype.showMixerWindow = function () {
-
+    var f = new MixerFragment(this)
+    this.wm.showFragment(f, this.mixerWindowConfig)
 }
 
 Dawesome.prototype.showFXWindow = function () {
@@ -699,9 +632,19 @@ Dawesome.prototype.showLiveWindow = function (joinRoom) {
         y: 10
     })
 }
-Dawesome.prototype.showMixerWindow = function () {
 
+Dawesome.prototype.joinLiveRoom = function (joinRoom) {
+    var f = new LiveFragment(this, joinRoom)
+
+    /*this.wm.showFragment(f, {
+        caption: "Live Collaboration",
+        height: 500,
+        width: 600,
+        x: window.innerWidth - 630,
+        y: 10
+    })*/
 }
+
 
 Dawesome.prototype.showFXDetail = function (fx, part) {
     var f = new FXDetailFragment(fx, part, this.player)
