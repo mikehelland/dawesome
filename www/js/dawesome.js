@@ -22,6 +22,12 @@ function Dawesome(config) {
 
     this.load()
 
+    if (config.room) {
+        this.showLiveWindow(config.room)
+    }
+    else {
+        //this.showWelcomeWindow()
+    }
 }
 
 Dawesome.prototype.load = function (data) {
@@ -682,8 +688,16 @@ Dawesome.prototype.showFXWindow = function () {
 
 }
 
-Dawesome.prototype.showTimelineWindow = function () {
+Dawesome.prototype.showLiveWindow = function (joinRoom) {
+    var f = new LiveFragment(this, joinRoom)
 
+    this.wm.showFragment(f, {
+        caption: "Live Collaboration",
+        height: 500,
+        width: 600,
+        x: window.innerWidth - 630,
+        y: 10
+    })
 }
 Dawesome.prototype.showMixerWindow = function () {
 

@@ -35,12 +35,19 @@
         <script src="js/slider_canvas.js"></script>
         <script src="js/dawesome.js"></script>
         <script src="js/dawesome_fragments.js"></script>
+        <script src="js/dawesome_live.js"></script>
         <script src="/js/window_manager.js"></script>
+        <script src="/js/omgrtc.js"></script>
         <script>
-            var daw = new Dawesome({
+            var pageParams = omg.util.getPageParams()
+            var dawParams = {
                 div: document.getElementById("dawesome"),
                 showMainMenu: true
-            })
+            }
+            if (pageParams.room) {
+                dawParams.room = pageParams.room
+            }
+            var daw = new Dawesome(dawParams)
         </script>
     </body>
 </html>

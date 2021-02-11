@@ -247,3 +247,29 @@ a, a:visited {
 .daw-selected-list-item {
     background-color: darkblue;
 }
+
+
+
+.daw-live-details {
+    display: flex;
+    flex-grow: 1;
+}
+
+.daw-live-chat {
+    flex-grow: 1;
+    color:white;
+    background-color: black;
+}
+
+.daw-live-users {
+    background-color: black;
+    padding: 4px 12px;
+    border-left: 1px solid white;
+    
+}
+
+.daw-live-chat-input {
+    background-color: black;
+    color: white;
+    padding: 4px;
+}
