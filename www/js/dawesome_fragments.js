@@ -12,8 +12,8 @@ function MixerFragment(daw) {
         this.addMixerChannel(this.song.parts[partName])
     }
 
-    this.onPartAddListener = (partName) => {
-        this.addMixerChannel(this.song.parts[partName])
+    this.onPartAddListener = (part) => {
+        this.addMixerChannel(part)
     }
     this.song.onPartAddListeners.push(this.onPartAddListener)
 }
@@ -540,7 +540,7 @@ function FXFragment(daw) {
         }
     }
     this.addPartListener = (part) => {
-        this.addFXChannel(this.song.parts[part])
+        this.addFXChannel(part)
     }
     this.song.onFXChangeListeners.push(this.fxChangeListener)
     this.song.onPartAddListeners.push(this.addPartListener)

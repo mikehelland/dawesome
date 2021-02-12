@@ -158,6 +158,7 @@ LiveFragment.prototype.setupListeners = function () {
     this.onChordProgressionChangeListenerInstance = (e, source) => this.onChordProgressionChangeListener(e, source)
     this.onPartAudioParamsChangeListenerInstance = (e, source) => this.onPartAudioParamsChangeListener(e, source)
     this.onPartAddListenerInstance = (e, source) => this.onPartAddListener(e, source)
+    this.onPartSectionAddListenerInstance = (e, section, source) => this.onPartSectionAddListener(e, section, source)
     this.onFXChangeListenerInstance = (e, source) => this.onFXChangeListener(e, source)
 
 
@@ -167,6 +168,7 @@ LiveFragment.prototype.setupListeners = function () {
     song.onChordProgressionChangeListeners.push(this.onChordProgressionChangeListenerInstance);
     song.onPartAudioParamsChangeListeners.push(this.onPartAudioParamsChangeListenerInstance);
     song.onPartAddListeners.push(this.onPartAddListenerInstance);
+    song.onPartSectionAddListeners.push(this.onPartSectionAddListenerInstance);
     song.onFXChangeListeners.push(this.onFXChangeListenerInstance)
 };
 
@@ -241,7 +243,6 @@ LiveFragment.prototype.onChordProgressionChangeListener = function (source) {
 
 LiveFragment.prototype.onPartAudioParamsChangeListener = function (part, source) {
     if (source === "omglive") return;
-
     this.emit("SONG", {
         property: "audioParams", 
         partName: part.data.name,
@@ -253,7 +254,17 @@ LiveFragment.prototype.onPartAddListener = function (part, source) {
     if (source === "omglive") return;
     this.emit("SONG", {
         action: "partAdd", 
-        part: this.song.parts[part].data,
+        part: part.data,
+    });
+};
+
+LiveFragment.prototype.onPartSectionAddListener = function (part, section, source) {
+    console.log(part, section)
+    if (source === "omglive") return;
+    this.emit("SONG", {
+        action: "partSectionAdd",
+        section: section.data.name, 
+        part: part.data,
     });
 };
 
@@ -333,7 +344,7 @@ LiveFragment.prototype.ondata = function (data) {
         this.song.chordProgressionChanged("omglive");
     }
     else if (data.property === "audioParams" && data.partName) {
-        let part = tg.currentSection.getPart(data.partName);
+        let part = this.song.parts[data.partName];
         if (!part) return;
         part.data.audioParams.mute = data.value.mute;
         part.data.audioParams.gain = data.value.gain;
@@ -342,7 +353,11 @@ LiveFragment.prototype.ondata = function (data) {
         this.song.partMuteChanged(part, "omglive");
     }
     else if (data.action === "partAdd") {
-        this.song.addPart(data.part.soundSet, "omglive");
+        this.song.addPart(data.part, "omglive");
+    }
+    else if (data.action === "partSectionAdd") {
+        this.song.addPartToSection(this.song.parts[data.part.name], 
+            this.song.sections[data.section], "omglive");
     }
     else if (data.action === "sequencerChange") {
         let part = tg.currentSection.getPart(data.partName);

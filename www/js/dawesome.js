@@ -37,6 +37,16 @@ Dawesome.prototype.load = function (data) {
 
     this.showMixerWindow()
     this.showFXWindow()
+
+    if (this.liveFragment) {
+        this.wm.showFragment(this.liveFragment, {
+            caption: "Live Collaboration",
+            height: 500,
+            width: 600,
+            x: window.innerWidth - 630,
+            y: 10
+        })
+    }
 }
 
 Dawesome.prototype.loadSong = function (data) {
@@ -200,9 +210,14 @@ Dawesome.prototype.setupTimeline = function () {
 
 Dawesome.prototype.loadTimeline = function () {
     
+    this.onPartAddListenerInstance = (part, source) => this.onPartAddListener(part, source)
+    this.song.onPartAddListeners.push(this.onPartAddListenerInstance)
+    this.onPartSectionAddListenerInstance = (part, section, source) => this.onPartSectionAddListener(part, section, source)
+    this.song.onPartSectionAddListeners.push(this.onPartSectionAddListenerInstance)
+
     if (this.song.sections.length === 0) {
         // TODO show empty? make one?
-        return 
+        //return 
     }
 
     this.timeline.partHeaders = {}
@@ -219,8 +234,10 @@ Dawesome.prototype.loadTimeline = function () {
                                             this.timeline.subbeatLength + "px"
     })
     
+    for (var partName in this.song.parts) {
+        this.addTimelinePartHeader(this.song.parts[partName])
+    }
     this.timeline.sectionWidthUsed = 0
-    var firstSection = true
     for (var sectionName in this.song.sections) {
         var section = this.song.sections[sectionName]
 
@@ -230,16 +247,12 @@ Dawesome.prototype.loadTimeline = function () {
             if (!part.daw) {
                 part.daw = {}
             }
-            if (firstSection) {
-                this.addTimelinePartHeader(part)
-            }
 
             part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
 
         }
 
         this.addSectionPartsToTimeline(section)
-        firstSection = false
     }
 
     this.refreshTimelineScrollBars()
@@ -345,7 +358,9 @@ Dawesome.prototype.showPartDetail = function (part) {
 
 Dawesome.prototype.showAddPartWindow = function () {
     var addCallback = data => {
-        this.addPart(data)
+        //this.addPart(data)
+        var headPart = this.song.addPart(data)
+        var part = this.song.addPartToSection(headPart, this.section)
         this.wm.close(win)
     }
 
@@ -409,23 +424,28 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
     part.daw.updateTimelineCanvas()
 }
 
-Dawesome.prototype.addPart = function (data) {
+Dawesome.prototype.onPartAddListener = function (headPart) {
     
     // add it this head part to the song
-    var headPart = this.song.addPart(data)
-    
+    //var headPart = this.song.addPart(data)
+    //console.log(partName)
+    //var headPart = this.song.parts[partName]
+
     this.player.loadPart(headPart)
     headPart.daw = {}
 
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
 
-    // now add an instance for the section
-    var part = this.song.addPartToSection(headPart, this.section)
-    part.daw = {}
-    part.daw.timelineHeader = partHeader
+}
 
-    this.addPartToTimeline(part, this.section)
+Dawesome.prototype.onPartSectionAddListener = function (part, section) {
+
+    // now add an instance for the section
+    //var part = section.partsthis.song.addPartToSection(headPart, section)
+    part.daw = {}
+    part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
+    this.addPartToTimeline(part, section)
 }
 
 Dawesome.prototype.showBeatParamsWindow = function () {
@@ -634,15 +654,7 @@ Dawesome.prototype.showLiveWindow = function (joinRoom) {
 }
 
 Dawesome.prototype.joinLiveRoom = function (joinRoom) {
-    var f = new LiveFragment(this, joinRoom)
-
-    /*this.wm.showFragment(f, {
-        caption: "Live Collaboration",
-        height: 500,
-        width: 600,
-        x: window.innerWidth - 630,
-        y: 10
-    })*/
+    this.liveFragment = new LiveFragment(this, joinRoom)
 }
 
 
