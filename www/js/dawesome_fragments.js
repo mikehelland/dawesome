@@ -6,8 +6,7 @@ function MixerFragment(daw) {
     this.div = document.createElement("div")
     this.div.classList.add("daw-mixer")
 
-    this.visibleMeters = []
-    
+    this.channels = []
     for (var partName in this.song.parts) {
         this.addMixerChannel(this.song.parts[partName])
     }
@@ -18,6 +17,12 @@ function MixerFragment(daw) {
     this.song.onPartAddListeners.push(this.onPartAddListener)
 }
 
+MixerFragment.prototype.onshow = function () {
+    for (var channel of this.channels) {
+        channel.volumeSlider.sizeCanvas()
+        channel.panSlider.sizeCanvas()
+    }
+}
 
 MixerFragment.prototype.addMixerChannel = function (part) {
     var channelDiv = document.createElement("div")
@@ -60,6 +65,8 @@ MixerFragment.prototype.addMixerChannel = function (part) {
             this.mixer.visibleMeters.push(new PeakMeter(part.postFXGain, meterHolder, this.player.context));
         }
     }*/
+
+    this.channels.push({volumeSlider, panSlider})
 }
 
 

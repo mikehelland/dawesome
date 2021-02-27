@@ -1,12 +1,16 @@
 "use strict";
-function Dawesome(config) {
+
+import OMusicContext from "/apps/music/js/omusic.js"
+
+export default function Dawesome(config) {
     this.div = config.div
 
     this.playChar = "&nbsp;&#9654;"
     this.stopChar = "&#9724;"
     
-    this.player = new OMusicPlayer()
-    this.player.loadFullSoundSets = true
+    this.musicContext = new OMusicContext()
+    this.musicContext.loadFullSoundSets = true
+
     this.partDrawer = new OMGEmbeddedViewerMusicDrawer()
     
     this.wm = new OMGWindowManager(config)
@@ -29,12 +33,13 @@ function Dawesome(config) {
     }
 }
 
-Dawesome.prototype.load = function (data) {
+Dawesome.prototype.load = async function (data) {
     this.wm.clearAll()
     this.setupTransport()
     this.setupTimeline()
-    this.loadSong(data)
-
+    
+    await this.loadSong(data)
+    
     this.showMixerWindow()
     this.showFXWindow()
 
@@ -49,7 +54,7 @@ Dawesome.prototype.load = function (data) {
     }
 }
 
-Dawesome.prototype.loadSong = function (data) {
+Dawesome.prototype.loadSong = async function (data) {
     /*var defaultSong;
     var blank
     if (blank) {
@@ -62,12 +67,12 @@ Dawesome.prototype.loadSong = function (data) {
             response.json().then(data => callback(data));
         });
     */
-    this.player = new OMusicPlayer()
-    this.player.loadFullSoundSets = true
-   
-    this.song = new OMGSong(data) //defaultSong
-    this.player.prepareSong(this.song)
 
+    var {song, player} = await this.musicContext.load(data)
+    this.song = song
+    this.player = player
+
+    // set the the first section, and make one if needed
     this.section = Object.values(this.song.sections)[0]
     if (!this.section) {
         this.section = this.song.addSection({name: "Intro"})
@@ -79,7 +84,7 @@ Dawesome.prototype.loadSong = function (data) {
 
     this.transport.updateBeats()
     this.transport.updateKey()
-
+    
 }
 
 Dawesome.prototype.setupTransport = function () {
@@ -382,7 +387,7 @@ Dawesome.prototype.addSection = function () {
     else {
         newSection = this.song.addSection()
     }
-    this.player.loadSection(newSection);
+    this.musicContext.loadSection(newSection);
     //this.player.loopSection = this.song.sections.indexOf(newSection);
     
     for (var partName in newSection.parts) {
@@ -426,12 +431,7 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
 
 Dawesome.prototype.onPartAddListener = function (headPart) {
     
-    // add it this head part to the song
-    //var headPart = this.song.addPart(data)
-    //console.log(partName)
-    //var headPart = this.song.parts[partName]
-
-    this.player.loadPart(headPart)
+    this.musicContext.loadPartHeader(headPart)
     headPart.daw = {}
 
     var partHeader = this.addTimelinePartHeader(headPart)
@@ -441,8 +441,7 @@ Dawesome.prototype.onPartAddListener = function (headPart) {
 
 Dawesome.prototype.onPartSectionAddListener = function (part, section) {
 
-    // now add an instance for the section
-    //var part = section.partsthis.song.addPartToSection(headPart, section)
+    this.musicContext.loadPart(part)
     part.daw = {}
     part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
     this.addPartToTimeline(part, section)

@@ -16,16 +16,14 @@
     </head>
     <body>
         <div id="dawesome"></div>
-
+        
+        
         <script src="/js/omgservice.js"></script>
         <script src="/js/searchbox.js"></script>
-        <!--<script src="/apps/music/js/omgclasses.js"></script>-->
+        
+        <!--<script src="/apps/music/js/omusic.js" type="module"></script>-->
         <script src="/apps/music/js/omgservice_music.js"></script>
-        <script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
-		<script src="/apps/music/js/omusic_player2.js"></script>
-        <script src="/apps/music/js/fxfactory.js"></script>
-        <script src="/apps/music/js/libs/tuna-min.js"></script>
-        <script src="/apps/music/js/libs/viktor/viktor.js"></script>
+        
         <script src="/apps/music/js/omusic-embed-draw.js"></script>
         <script src="/apps/music/js/sequencer_surface.js"></script>
         <script src="/apps/music/js/vertical_surface.js"></script>
@@ -33,12 +31,12 @@
         
         
         <script src="js/slider_canvas.js"></script>
-        <script src="js/dawesome.js"></script>
         <script src="js/dawesome_fragments.js"></script>
         <script src="js/dawesome_live.js"></script>
         <script src="/js/window_manager.js"></script>
         <script src="/js/omgrtc.js"></script>
-        <script>
+        <script type="module">
+            import Dawesome from "./js/dawesome.js"
             var pageParams = omg.util.getPageParams()
             var dawParams = {
                 div: document.getElementById("dawesome"),
@@ -47,7 +45,7 @@
             if (pageParams.room) {
                 dawParams.room = pageParams.room
             }
-            var daw = new Dawesome(dawParams)
+            window.daw = new Dawesome(dawParams)
         </script>
     </body>
 </html>
