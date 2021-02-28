@@ -6,7 +6,7 @@ function MixerFragment(daw) {
     this.div = document.createElement("div")
     this.div.classList.add("daw-mixer")
 
-    this.channels = []
+    this.parts = {}
     for (var partName in this.song.parts) {
         this.addMixerChannel(this.song.parts[partName])
     }
@@ -14,13 +14,16 @@ function MixerFragment(daw) {
     this.onPartAddListener = (part) => {
         this.addMixerChannel(part)
     }
+    this.onAudioParamsChange = (part) => {
+        this.parts[part.data.name].refresh()
+    }
     this.song.onPartAddListeners.push(this.onPartAddListener)
+    this.song.onPartAudioParamsChangeListeners.push(this.onAudioParamsChange)
 }
 
 MixerFragment.prototype.onshow = function () {
-    for (var channel of this.channels) {
-        channel.volumeSlider.sizeCanvas()
-        channel.panSlider.sizeCanvas()
+    for (var partName in this.parts) {
+        this.parts[partName].refresh()
     }
 }
 
@@ -44,6 +47,10 @@ MixerFragment.prototype.addMixerChannel = function (part) {
 
     this.div.appendChild(channelDiv)
 
+    var onchange = () => {
+        part.song.partMuteChanged(part);
+    }
+
     var volumeProperty = {"property": "gain", "name": "", "type": "slider", "min": 0, "max": 1.5, 
             "color": part.data.audioParams.mute ?"#880000" : "#008800", transform: "square", direction: "vertical"};
     var volumeSlider = new SliderCanvas(volumeCanvas, volumeProperty, part.gain, part.data.audioParams, onchange);
@@ -66,7 +73,11 @@ MixerFragment.prototype.addMixerChannel = function (part) {
         }
     }*/
 
-    this.channels.push({volumeSlider, panSlider})
+    this.parts[part.data.name] = {volumeSlider, panSlider, refresh: () => {
+            volumeSlider.sizeCanvas()
+            panSlider.sizeCanvas()
+        }
+    }
 }
 
 
@@ -588,20 +599,14 @@ FXFragment.prototype.addFXChannel = function (part) {
 
     this.loadChannelFXList(part, listDiv)
 
-    addButton.onclick = e => {
+    addButton.onclick = async e => {
         var fxMenu = []
-        for (let fxName in this.player.fxFactory.fx) {
-            fxMenu.push({name: fxName, onclick: () => {
-                    var fx = this.player.addFXToPart(fxName, part)
-                    /*console.log(fx)
-                    var fxDiv = document.createElement("div")
-                    fxDiv.innerHTML = fx.data.name
-                    fxDiv.className = "daw-fx-button"
-                    listDiv.appendChild(fxDiv)
 
-                    fxDiv.onclick = e => {
-                        this.daw.showFXDetail(fx, part)
-                    }*/
+        var fxFactory = await this.daw.musicContext.getFXFactory()
+
+        for (let fxName in fxFactory.fx) {
+            fxMenu.push({name: fxName, onclick: () => {
+                    var fx = this.daw.musicContext.addFXToPart(fxName, part)
                     this.daw.showFXDetail(fx, part)        
                 }
             })

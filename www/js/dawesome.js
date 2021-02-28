@@ -284,7 +284,7 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
     header.muteButton.className = "daw-timeline-mute-button"
     header.muteButton.innerHTML = "M"
     header.muteButton.onclick = e => {
-        this.player.mutePart(part, !part.data.audioParams.mute)
+        this.musicContext.mutePart(part, !part.data.audioParams.mute)
     }
 
     header.recordButton = document.createElement("div")
