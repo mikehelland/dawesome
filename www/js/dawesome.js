@@ -287,12 +287,21 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
         this.musicContext.mutePart(part, !part.data.audioParams.mute)
     }
 
+    header.optionsButton = document.createElement("div")
+    header.optionsButton.className = "daw-timeline-options-button"
+    header.optionsButton.innerHTML = "O"
+    header.optionsButton.onclick = e => {
+        this.wm.showFragment(new PartOptionsFragment(part), 
+            {width:300, height:400, caption: part.data.name + " Options"})
+    }
+
     header.recordButton = document.createElement("div")
     header.recordButton.className = "daw-timeline-record-button"
     header.recordButton.innerHTML = "R"
 
     header.div.appendChild(header.caption)
     header.div.appendChild(header.muteButton)
+    header.div.appendChild(header.optionsButton)
     //header.div.appendChild(header.recordButton)
     this.timeline.headersDiv.appendChild(header.div)
     this.timeline.partHeaders[part.data.name] = header

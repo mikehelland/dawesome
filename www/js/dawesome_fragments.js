@@ -713,3 +713,45 @@ FXDetailFragment.prototype.onshow = function () {
         div.sizeCanvas();
     });
 }
+
+
+function PartOptionsFragment(part, daw) {
+    this.div = document.createElement("div")
+    
+    var nameInput = document.createElement("input")
+    nameInput.value = part.data.name
+    this.div.appendChild(nameInput)
+
+    if (navigator.requestMIDIAccess) {
+        var onchannelchange = () => {
+            if (!daw.midi) {
+                daw.midi = new OMGMIDI()
+            }
+            var index = tg.midiParts.indexOf(ff.part);
+            if (f.midiCanvas.value === "Off" && index > -1) {
+                tg.midiParts.splice(index, 1);
+            }
+            else if (f.midiCanvas.value !== "Off" && index === -1) {
+                ff.part.activeMIDINotes = [];
+                ff.part.activeMIDINotes.autobeat = 1;
+                tg.midiParts.push(ff.part);
+            }
+        };
+
+        if (!part.midiChannel) {
+            part.midiChannel = "Off"
+        }
+        var midiProperty = {"property": "midiChannel", "name": "MIDI Channel", "type": "options",
+                options: ["Off", "All", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                "color": "#008800", transform: "square"};
+        this.midiCanvas = new SliderCanvas(undefined, midiProperty, undefined, part, onchannelchange);
+        this.midiCanvas.div.className = "fx-slider";
+        this.div.appendChild(this.midiCanvas.div)
+    }
+}
+
+PartOptionsFragment.prototype.onshow = function () {
+    if (this.midiCanvas) {
+        this.midiCanvas.sizeCanvas()
+    }
+}
