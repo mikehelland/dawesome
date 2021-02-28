@@ -457,42 +457,45 @@ function SaveFragment(song) {
     this.song = song
     this.div = document.createElement("div")
     
+    this.saveDiv = document.createElement("div")
+    this.div.appendChild(this.saveDiv)
+
     captionDiv = document.createElement("div")
     captionDiv.innerHTML = "Song Name:"
-    this.div.appendChild(captionDiv)
+    this.saveDiv.appendChild(captionDiv)
     this.nameInput = document.createElement("input")
-    this.div.appendChild(this.nameInput)
+    this.saveDiv.appendChild(this.nameInput)
     
     captionDiv = document.createElement("div")
     captionDiv.innerHTML = "Tags:"
-    this.div.appendChild(captionDiv)
+    this.saveDiv.appendChild(captionDiv)
     this.tagsInput = document.createElement("input")
-    this.div.appendChild(this.tagsInput)
+    this.saveDiv.appendChild(this.tagsInput)
     
     captionDiv = document.createElement("div")
     captionDiv.innerHTML = "Bitcoin Address (your tip jar):"
-    this.div.appendChild(captionDiv)
+    this.saveDiv.appendChild(captionDiv)
     this.btcInput = document.createElement("input")
-    this.div.appendChild(this.btcInput)
+    this.saveDiv.appendChild(this.btcInput)
 
     this.nameInput.value = song.data.name || ""
     this.tagsInput.value = song.data.tags || ""
     this.btcInput.value = song.data.btc_address || ""
 
-
+    this.saveDiv.appendChild(document.createElement("br"))
     
     if (song.data.id) {
         this.overwriteButton = document.createElement("button")
         this.overwriteButton.innerHTML = "Overwrite"
         this.saveCopyButton = document.createElement("button")
         this.saveCopyButton.innerHTML = "Save Copy"
-        this.div.appendChild(this.overwriteButton)
-        this.div.appendChild(this.saveCopyButton)
+        this.saveDiv.appendChild(this.overwriteButton)
+        this.saveDiv.appendChild(this.saveCopyButton)
 
         this.overwriteButton.onclick = e => {
             this.post()
         }
-        this.overwriteButton.onclick = e => {
+        this.saveCopyButton.onclick = e => {
             delete song.data.id
             this.post()
         }
@@ -500,7 +503,7 @@ function SaveFragment(song) {
     else {
         this.saveButton = document.createElement("button")
         this.saveButton.innerHTML = "Save"
-        this.div.appendChild(this.saveButton)
+        this.saveDiv.appendChild(this.saveButton)
 
         this.saveButton.onclick = e => {
             this.post()
@@ -518,6 +521,22 @@ SaveFragment.prototype.post = function () {
     var data = this.song.getData()
     omg.server.post(data, res => {
         console.log(res)
+
+        this.song.data.id = res.id
+
+        this.div.removeChild(this.saveDiv)
+
+        var el = document.createElement("div")
+        el.innerHTML = "Saved!"
+        this.div.appendChild(el)
+
+        el = document.createElement("div")
+        el.innerHTML = "You can view your song here:"
+        this.div.appendChild(el)
+
+        el = document.createElement("input")
+        el.value = window.location.origin + "/view/" + res.id
+        this.div.appendChild(el)
 
         // show saved
         // timeout close

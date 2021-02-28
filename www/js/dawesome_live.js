@@ -119,6 +119,27 @@ LiveFragment.prototype.goLive = function (joinRoom) {
     this.daw.rt.on("SONG", e => {
         this.ondata(e)
     })
+
+    this.daw.rt.onincomingcall = (name, callback) => {
+        var user = this.daw.rt.remoteUsers[name]
+        if (!user) {
+            console.warn("call from unknown user", name)
+        }
+        this.daw.wm.showFragment({div: user.video}, {width: 180, height: 160})
+        if (this.isLocalVideoShowing) {
+            callback()
+        }
+        else {
+            console.log("testt")
+            this.daw.rt.getUserMedia((video) => {
+                console.log("testt2")
+                this.daw.wm.showFragment({div: video, onhide: ()=> {this.isLocalVideoShowing = false}}, {width: 180, height: 160})
+                this.isLocalVideoShowing = true
+    
+                callback()
+            })
+        }
+    }
 }
 
 LiveFragment.prototype.showNewText = function (data) {
@@ -130,6 +151,10 @@ LiveFragment.prototype.showNewText = function (data) {
 LiveFragment.prototype.addUser = function (name, user) {
     var userDiv = document.createElement("div")
     userDiv.innerHTML = name
+    var callUserButton = document.createElement("button")
+    callUserButton.innerHTML = "Call"
+    callUserButton.onclick = e => this.callUser(name, user)
+    userDiv.appendChild(callUserButton)
     this.liveChatUsers.appendChild(userDiv)
 
     this.userParts.set(user, userDiv)
@@ -140,6 +165,29 @@ LiveFragment.prototype.removeUser = function (name, user) {
     if (partDiv) {
         this.liveChatUsers.removeChild(partDiv)
     }
+}
+
+LiveFragment.prototype.callUser = function (name, user) {
+
+    var callUser = () => {
+        this.daw.rt.callUser(name, user => {
+            this.daw.wm.showFragment({div: user.video}, {width: 180, height: 160})
+        })
+    }    
+
+    if (this.isLocalVideoShowing) {
+        callUser()
+    }
+    else {
+        this.daw.rt.getUserMedia((video) => {
+            this.daw.wm.showFragment({div: video, onhide: ()=> {this.isLocalVideoShowing = false}}, {width: 180, height: 160})
+            this.isLocalVideoShowing = true
+
+            callUser()
+        })
+    }
+    
+
 }
 
 LiveFragment.prototype.emit = function (type, data) {
