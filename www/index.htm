@@ -38,15 +38,17 @@
         <script src="/js/omgrtc.js"></script>
         <script type="module">
             import Dawesome from "./js/dawesome.js"
-            var pageParams = omg.util.getPageParams()
-            var dawParams = {
-                div: document.getElementById("dawesome"),
-                showMainMenu: true
-            }
-            if (pageParams.room) {
-                dawParams.room = pageParams.room
-            }
-            window.daw = new Dawesome(dawParams)
+            omg.getContext().then(ctx => {
+                var dawParams = {
+                    div: document.getElementById("dawesome"),
+                    showMainMenu: true
+                }
+                if (ctx.pageParams.room) {
+                    dawParams.room = ctx.pageParams.room
+                }
+                window.daw = new Dawesome(dawParams)
+            })
+
         </script>
     </body>
 </html>

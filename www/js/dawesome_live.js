@@ -98,7 +98,8 @@ LiveFragment.prototype.goLive = function (joinRoom) {
             await this.daw.load(e.thing)
             this.song = this.daw.song
         }
-        this.setupListeners()
+        this.live = new DawesomeLive(this.daw.rt, this.song, this.daw.player)
+        //this.setupListeners()
         
         this.collabLink.value = this.roomname
         this.liveChatUsers.innerHTML = this.username + " (you)"
@@ -117,7 +118,7 @@ LiveFragment.prototype.goLive = function (joinRoom) {
         this.showNewText(e)
     })
     this.daw.rt.on("SONG", e => {
-        this.ondata(e)
+        this.live.ondata(e)
     })
 
     this.daw.rt.onincomingcall = (name, callback) => {
@@ -130,9 +131,7 @@ LiveFragment.prototype.goLive = function (joinRoom) {
             callback()
         }
         else {
-            console.log("testt")
             this.daw.rt.getUserMedia((video) => {
-                console.log("testt2")
                 this.daw.wm.showFragment({div: video, onhide: ()=> {this.isLocalVideoShowing = false}}, {width: 180, height: 160})
                 this.isLocalVideoShowing = true
     
@@ -190,15 +189,84 @@ LiveFragment.prototype.callUser = function (name, user) {
 
 }
 
-LiveFragment.prototype.emit = function (type, data) {
-    data.room = true
-    //from: this.userName
-    this.daw.rt.emit(type, data)
+
+function RemoteFragment(daw) {
+
+    this.daw = daw
+    this.username = "guest" + Math.trunc(Math.random() * 100000)
+    this.roomname = window.location.pathname + "?room=test"
+    var fullURL = window.location.origin + "/apps/gauntlet/?remoteTo=" + encodeURIComponent(this.roomname)
+    
+    this.div = document.createElement("div")
+
+    var caption = document.createElement("div")
+    caption.innerHTML = "<div>Remote control this session from another device:</div>"
+    this.div.appendChild(caption)
+    this.urlInput = document.createElement("input")
+    this.urlInput.value = fullURL
+    this.urlInput.style.width = "100%"
+    this.div.appendChild(this.urlInput)
+
+    var connectedCaption = document.createElement("div")
+    connectedCaption.innerHTML = "Connected remote controls:"
+    this.div.appendChild(connectedCaption)
+
+    this.connectedList = document.createElement("div")
+    this.div.appendChild(this.connectedList)
+
+    this.song = this.daw.song
+    var data = this.song.getData()
+    
+    this.rt = new OMGRealTime()
+    this.rt.onready = () => {
+        this.rt.join(this.roomname, this.username, data)
+    }
+    
+    this.rt.onnewuser = (name, user) => {
+        user.connectedDiv = document.createElement("div")
+        user.connectedDiv.innerHTML = name
+        this.connectedList.appendChild(user.connectedDiv)
+        //this.showNewText({from: name, message: "[joined]"})
+        //this.addUser(name, user)
+    }
+
+    this.rt.onuserleft = (name, user) => {
+        //this.connectedList.removeChild(user.connectedDiv)
+        //this.showNewText({from: name, message: "[left]"})
+        //this.removeUser(name, user)
+    }
+    this.rt.onuserdisconnected = (name, user) => {
+        this.connectedList.removeChild(user.connectedDiv)
+        //this.showNewText({from: name, message: "[disconnected]"})
+        //this.removeUser(name, user)
+    }
+
+    this.rt.onuserreconnected = (name, user) => {
+        this.connectedList.appendChild(user.connectedDiv)
+    }
+
+    this.rt.onjoined = async e => {
+        this.live = new DawesomeLive(this.rt, this.song, this.daw.player)
+
+        for (var username in e.users) {
+            if (username !== this.username) {
+                //this.addUser(username, e.users[username])
+            }
+        }
+    }
+    
+    this.rt.on("SONG", e => {
+        this.live.ondata(e)
+    })
+    
 }
 
-LiveFragment.prototype.setupListeners = function () {
-    var song = this.daw.song
-    this.player = this.daw.player
+
+
+function DawesomeLive(rt, song, player) {
+    this.rt = rt
+    this.song = song
+    this.player = player
 
     this.onPlayListenerInstance = (e, source) => this.onPlayListener(e, source)
     this.onBeatChangeListenerInstance = (e, source) => this.onBeatChangeListener(e, source)
@@ -206,40 +274,37 @@ LiveFragment.prototype.setupListeners = function () {
     this.onChordProgressionChangeListenerInstance = (e, source) => this.onChordProgressionChangeListener(e, source)
     this.onPartAudioParamsChangeListenerInstance = (e, source) => this.onPartAudioParamsChangeListener(e, source)
     this.onPartAddListenerInstance = (e, source) => this.onPartAddListener(e, source)
-    this.onPartSectionAddListenerInstance = (e, section, source) => this.onPartSectionAddListener(e, section, source)
     this.onFXChangeListenerInstance = (action, part, fx, source) => this.onFXChangeListener(action, part, fx, source)
 
 
-    this.daw.player.onPlayListeners.push(this.onPlayListenerInstance);
+    this.player.onPlayListeners.push(this.onPlayListenerInstance);
     song.onBeatChangeListeners.push(this.onBeatChangeListenerInstance);
     song.onKeyChangeListeners.push(this.onKeyChangeListenerInstance);
     song.onChordProgressionChangeListeners.push(this.onChordProgressionChangeListenerInstance);
     song.onPartAudioParamsChangeListeners.push(this.onPartAudioParamsChangeListenerInstance);
     song.onPartAddListeners.push(this.onPartAddListenerInstance);
-    song.onPartSectionAddListeners.push(this.onPartSectionAddListenerInstance);
     song.onFXChangeListeners.push(this.onFXChangeListenerInstance)
 };
 
-LiveFragment.prototype.removeListeners = function () {
-    var song = this.daw.song
+DawesomeLive.prototype.removeListeners = function () {
     this.removeListener(this.daw.player.onPlayListeners, this.onPlayListenerInstance);
-    this.removeListener(song.onBeatChangeListeners, this.onBeatChangeListener);
-    this.removeListener(song.onKeyChangeListeners, this.onKeyChangeListener);
-    this.removeListener(song.onChordProgressionChangeListeners, this.onChordProgressionChangeListener);
-    this.removeListener(song.onPartAudioParamsChangeListeners, this.onPartAudioParamsChangeListener);
-    this.removeListener(song.onPartAddListeners, this.onPartAddListener);
-    this.removeListener(song.onFXChangeListeners, this.onFXChangeListener);
+    this.removeListener(this.song.onBeatChangeListeners, this.onBeatChangeListener);
+    this.removeListener(this.song.onKeyChangeListeners, this.onKeyChangeListener);
+    this.removeListener(this.song.onChordProgressionChangeListeners, this.onChordProgressionChangeListener);
+    this.removeListener(this.song.onPartAudioParamsChangeListeners, this.onPartAudioParamsChangeListener);
+    this.removeListener(this.song.onPartAddListeners, this.onPartAddListener);
+    this.removeListener(this.song.onFXChangeListeners, this.onFXChangeListener);
 
 };
 
-LiveFragment.prototype.removeListener = function (listeners, listener) {
+DawesomeLive.prototype.removeListener = function (listeners, listener) {
     var index = listeners.indexOf(listener)
     if (index > -1) {
         listeners.splice(index, 1);
     }
 };
 
-LiveFragment.prototype.onLoadSongListener = function (source) {
+DawesomeLive.prototype.onLoadSongListener = function (source) {
     if (source === "omglive") return;
 
     this.setupListeners();
@@ -250,7 +315,7 @@ LiveFragment.prototype.onLoadSongListener = function (source) {
     });
 };
 
-LiveFragment.prototype.onFXChangeListener = function (action, part, fx, source) {
+DawesomeLive.prototype.onFXChangeListener = function (action, part, fx, source) {
     if (source === "omglive") return;
 
     this.emit("SONG", {
@@ -262,7 +327,7 @@ LiveFragment.prototype.onFXChangeListener = function (action, part, fx, source) 
     });
 };
 
-LiveFragment.prototype.onBeatChangeListener = function (beatParams, source) {
+DawesomeLive.prototype.onBeatChangeListener = function (beatParams, source) {
     if (source === "omglive") return;
 
     this.emit("SONG", {
@@ -271,7 +336,7 @@ LiveFragment.prototype.onBeatChangeListener = function (beatParams, source) {
     });
 };
 
-LiveFragment.prototype.onKeyChangeListener = function (keyParams, source) {
+DawesomeLive.prototype.onKeyChangeListener = function (keyParams, source) {
     if (source === "omglive") return;
 
     this.emit("SONG", {
@@ -280,7 +345,7 @@ LiveFragment.prototype.onKeyChangeListener = function (keyParams, source) {
     });
 };
 
-LiveFragment.prototype.onChordProgressionChangeListener = function (source) {
+DawesomeLive.prototype.onChordProgressionChangeListener = function (source) {
     if (source === "omglive") return;
 
     this.emit("SONG", {
@@ -289,7 +354,7 @@ LiveFragment.prototype.onChordProgressionChangeListener = function (source) {
     });
 };
 
-LiveFragment.prototype.onPartAudioParamsChangeListener = function (part, source) {
+DawesomeLive.prototype.onPartAudioParamsChangeListener = function (part, source) {
     if (source === "omglive") return;
     this.emit("SONG", {
         property: "audioParams", 
@@ -298,7 +363,7 @@ LiveFragment.prototype.onPartAudioParamsChangeListener = function (part, source)
     });
 };
 
-LiveFragment.prototype.onPartAddListener = function (part, source) {
+DawesomeLive.prototype.onPartAddListener = function (part, source) {
     if (source === "omglive") return;
     this.emit("SONG", {
         action: "partAdd", 
@@ -306,17 +371,7 @@ LiveFragment.prototype.onPartAddListener = function (part, source) {
     });
 };
 
-LiveFragment.prototype.onPartSectionAddListener = function (part, section, source) {
-    console.log(part, section)
-    if (source === "omglive") return;
-    this.emit("SONG", {
-        action: "partSectionAdd",
-        section: section.data.name, 
-        part: part.data,
-    });
-};
-
-LiveFragment.prototype.onSequencerChangeListener = function (part, trackI, subbeat) {
+DawesomeLive.prototype.onSequencerChangeListener = function (part, trackI, subbeat) {
     var data = {
         action: "sequencerChange", 
         partName: part.data.name,
@@ -327,7 +382,7 @@ LiveFragment.prototype.onSequencerChangeListener = function (part, trackI, subbe
     this.emit("SONG", data);
 };
 
-LiveFragment.prototype.onVerticalChangeListener = function (part, frets, autobeat) {
+DawesomeLive.prototype.onVerticalChangeListener = function (part, frets, autobeat) {
     if (tg.omglive.peerDataChannel) {
         tg.omglive.peerDataChannel.send(JSON.stringify({
             action: "verticalChangeFrets", 
@@ -355,7 +410,7 @@ LiveFragment.prototype.onVerticalChangeListener = function (part, frets, autobea
     }
 };
 
-LiveFragment.prototype.onPlayListener = function (play) {
+DawesomeLive.prototype.onPlayListener = function (play) {
     if (this.remoteTo) {
         //??return
     }
@@ -367,7 +422,13 @@ LiveFragment.prototype.onPlayListener = function (play) {
 };
 
 
-LiveFragment.prototype.ondata = function (data) {
+DawesomeLive.prototype.emit = function (type, data) {
+    data.room = true
+    //from: this.userName
+    this.rt.emit(type, data)
+}
+
+DawesomeLive.prototype.ondata = function (data) {
     console.log(data)
     if (data.action === "loadSong") {
         tg.omglive.removeListeners();
@@ -408,10 +469,12 @@ LiveFragment.prototype.ondata = function (data) {
             this.song.sections[data.section], "omglive");
     }
     else if (data.action === "sequencerChange") {
-        let part = tg.currentSection.getPart(data.partName);
+        let section = this.song.sections[data.sectionName]
+        if (!section) return
+        let part = section.parts[data.partName]
+        if (!part) return
         part.data.tracks[data.trackI].data[data.subbeat] = data.value;
-        if (part.drumMachine && !part.drumMachine.hidden) part.drumMachine.draw();
-        if (tg.presentationMode) part.presentationUI.draw();
+        part.change(data.trackI, data.subbeat, data[data.subbeat])
     }
     else if (data.action === "verticalChangeFrets") {
         tg.omglive.onVerticalChangeFrets(data);
@@ -442,7 +505,7 @@ LiveFragment.prototype.ondata = function (data) {
     }
 };
 
-LiveFragment.prototype.onVerticalChangeFrets = function (data) {
+DawesomeLive.prototype.onVerticalChangeFrets = function (data) {
     var part = tg.currentSection.getPart(data.partName);
     if (data.value.length > 0) {
         data.value.autobeat = data.autobeat;
@@ -454,7 +517,7 @@ LiveFragment.prototype.onVerticalChangeFrets = function (data) {
     if (part.mm && !part.mm.hidden) part.mm.draw();
 };
 
-LiveFragment.prototype.onFXChange = function (data) {
+DawesomeLive.prototype.onFXChange = function (data) {
     let part = data.partName ? this.song.parts[data.partName] : this.song;
     if (!part) return;
 
@@ -473,7 +536,7 @@ LiveFragment.prototype.onFXChange = function (data) {
     }
 }
 
-LiveFragment.prototype.partData = function (part, data) {
+DawesomeLive.prototype.partData = function (part, data) {
     
     var fret = Math.max(0, Math.min(part.mm.frets.length - 1,
         part.mm.skipFretsBottom + Math.round((1 - data.y) * 
@@ -502,7 +565,7 @@ LiveFragment.prototype.partData = function (part, data) {
     tg.player.playLiveNotes(part.omglive.notes, part, 0);    
 };
 
-LiveFragment.prototype.partDataEnd = function (part, data) {
+DawesomeLive.prototype.partDataEnd = function (part, data) {
     var noteIndex = part.omglive.notes.indexOf(part.omglive.users[data.user].note);
     part.omglive.notes.splice(noteIndex, 1);
     delete part.omglive.users[data.user];
@@ -514,3 +577,6 @@ LiveFragment.prototype.partDataEnd = function (part, data) {
         tg.player.endLiveNotes(part);
     }   
 };
+
+
+

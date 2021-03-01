@@ -217,8 +217,6 @@ Dawesome.prototype.loadTimeline = function () {
     
     this.onPartAddListenerInstance = (part, source) => this.onPartAddListener(part, source)
     this.song.onPartAddListeners.push(this.onPartAddListenerInstance)
-    this.onPartSectionAddListenerInstance = (part, section, source) => this.onPartSectionAddListener(part, section, source)
-    this.song.onPartSectionAddListeners.push(this.onPartSectionAddListenerInstance)
 
     if (this.song.sections.length === 0) {
         // TODO show empty? make one?
@@ -254,6 +252,7 @@ Dawesome.prototype.loadTimeline = function () {
             }
 
             part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
+            console.log(part.data.name)
 
         }
 
@@ -372,9 +371,7 @@ Dawesome.prototype.showPartDetail = function (part) {
 
 Dawesome.prototype.showAddPartWindow = function () {
     var addCallback = data => {
-        //this.addPart(data)
         var headPart = this.song.addPart(data)
-        var part = this.song.addPartToSection(headPart, this.section)
         this.wm.close(win)
     }
 
@@ -446,14 +443,16 @@ Dawesome.prototype.onPartAddListener = function (headPart) {
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
 
-}
-
-Dawesome.prototype.onPartSectionAddListener = function (part, section) {
-
-    this.musicContext.loadPart(part)
-    part.daw = {}
-    part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
-    this.addPartToTimeline(part, section)
+    for (var sectionName in this.song.sections){
+        var section = this.song.sections[sectionName]
+        var part = section.parts[headPart.data.name] 
+        
+        this.musicContext.loadPart(part)
+        part.daw = {}
+        part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
+        this.addPartToTimeline(part, section)
+    }
+    
 }
 
 Dawesome.prototype.showBeatParamsWindow = function () {
@@ -675,4 +674,16 @@ Dawesome.prototype.showFXDetail = function (fx, part) {
         width: 300
     })
 
+}
+
+Dawesome.prototype.showRemoveControlsWindow = function () {
+    var f = new RemoteFragment(this)
+
+    this.wm.showFragment(f, {
+        caption: "Remote Controls",
+        height: 300,
+        width: 400,
+        x: window.innerWidth - 630,
+        y: window.innerHeight - 530
+    })
 }
