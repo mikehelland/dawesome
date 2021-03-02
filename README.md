@@ -6,7 +6,10 @@ music that is shared with its "source code", promoting remixing by humans and co
 The music is stored in a format that retains the musical context, such as key and time 
 signature, allowing for the easy modification and mutation of melodies and beats.
 
-Dawsome is an app written for the [OMG platform](https://github.com/mikehelland/openmedia.gallery). 
+Dawsome is an app written for the [OMG platform](https://github.com/mikehelland/openmedia.gallery)
+and the [OMG Music Context](https://github.com/mikehelland/openmedia.gallery). 
+
+Give it a try at [https://openmedia.gallery/apps/dawesome](https://openmedia.gallery/apps/dawesome).
 
 ## Live Collaboration
 
@@ -18,6 +21,8 @@ Dawesome uses WebSockets and WebRTC to connect multiple users to the same sessio
 
 WebSockets are also used to connect local devices to the session as remote controls.
 Dawesome is touchscreen guitar compatible.
+
+![touchscreen guitar](https://avatars.githubusercontent.com/u/19311107?s=400&u=590f81002a3415584cd8ac0305a726a85316dbd7&v=4)
 
 ## Programmable
 
