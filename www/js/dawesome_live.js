@@ -477,8 +477,7 @@ DawesomeLive.prototype.ondata = function (data) {
         part.change(data.trackI, data.subbeat, data[data.subbeat])
     }
     else if (data.action === "verticalChangeFrets") {
-        tg.omglive.onVerticalChangeFrets(data);
-        if (tg.presentationMode) part.presentationUI.draw();
+        this.onVerticalChangeFrets(data);
     }
     else if (data.action === "fxChange") {
         this.onFXChange(data);
@@ -506,15 +505,14 @@ DawesomeLive.prototype.ondata = function (data) {
 };
 
 DawesomeLive.prototype.onVerticalChangeFrets = function (data) {
-    var part = tg.currentSection.getPart(data.partName);
+    var part = this.song.parts[data.partName];
     if (data.value.length > 0) {
         data.value.autobeat = data.autobeat;
-        tg.player.playLiveNotes(data.value, part, 0);
+        this.player.playLiveNotes(data.value, part, 0);
     }
     else {
-        tg.player.endLiveNotes(part);
+        this.player.endLiveNotes(part);
     }
-    if (part.mm && !part.mm.hidden) part.mm.draw();
 };
 
 DawesomeLive.prototype.onFXChange = function (data) {
