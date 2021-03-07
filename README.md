@@ -29,7 +29,7 @@ Dawesome is touchscreen guitar compatible.
 Open up the JavaScript terminal in your browser, and use `daw.song` to programmatically 
 manipulate the music and your work environment.
 
-## Embedable
+## Embeddable
 
 Dawesome has been embedded into social networking sites, video and animation editors,
 game engines, and more.
