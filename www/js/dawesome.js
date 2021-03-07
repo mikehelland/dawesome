@@ -393,8 +393,6 @@ Dawesome.prototype.addSection = function () {
     else {
         newSection = this.song.addSection()
     }
-    this.musicContext.loadSection(newSection);
-    //this.player.loopSection = this.song.sections.indexOf(newSection);
     
     for (var partName in newSection.parts) {
         var part = newSection.parts[partName]
@@ -437,7 +435,6 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
 
 Dawesome.prototype.onPartAddListener = function (headPart) {
     
-    this.musicContext.loadPartHeader(headPart)
     headPart.daw = {}
 
     var partHeader = this.addTimelinePartHeader(headPart)
@@ -447,7 +444,6 @@ Dawesome.prototype.onPartAddListener = function (headPart) {
         var section = this.song.sections[sectionName]
         var part = section.parts[headPart.data.name] 
         
-        this.musicContext.loadPart(part)
         part.daw = {}
         part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
         this.addPartToTimeline(part, section)
