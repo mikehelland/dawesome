@@ -21,10 +21,8 @@
         <script src="/js/omgservice.js"></script>
         <script src="/js/searchbox.js"></script>
         
-        <!--<script src="/apps/music/js/omusic.js" type="module"></script>-->
         <script src="/apps/music/js/omgservice_music.js"></script>
         
-        <script src="/apps/music/js/omusic-embed-draw.js"></script>
         <script src="/apps/music/js/sequencer_surface.js"></script>
         <script src="/apps/music/js/vertical_surface.js"></script>
         <script src="/apps/music/js/libs/peakmeter.js"></script>
@@ -34,7 +32,6 @@
         <script src="js/slider_canvas.js"></script>
         <script src="js/dawesome_fragments.js"></script>
         <script src="js/dawesome_live.js"></script>
-        <script src="/js/window_manager.js"></script>
         <script src="/js/omgrtc.js"></script>
         <script type="module">
             import Dawesome from "./js/dawesome.js"
@@ -45,6 +42,9 @@
                 }
                 if (ctx.pageParams.room) {
                     dawParams.room = ctx.pageParams.room
+                }
+                if (ctx.pageParams.id) {
+                    dawParams.id = ctx.pageParams.id
                 }
                 window.daw = new Dawesome(dawParams)
             })

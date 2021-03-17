@@ -1,6 +1,8 @@
 "use strict";
 
 import OMusicContext from "/apps/music/js/omusic.js"
+import OMGEmbeddedViewerMusicDrawer from "/apps/music/js/omusic-embed-draw.js"
+import OMGWindowManager from "/js/window_manager.js"
 
 export default function Dawesome(config) {
     this.div = config.div
@@ -26,6 +28,11 @@ export default function Dawesome(config) {
 
     if (config.room) {
         this.joinLiveRoom(config.room)
+    }
+    else if (config.id) {
+        fetch("/data/" + config.id).then(res=>res.json()).then(json => {
+            this.load(json)
+        })
     }
     else {
         this.load()
