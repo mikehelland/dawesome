@@ -825,3 +825,23 @@ ChordProgressionFragment.prototype.update = function () {
     this.displayDiv.innerHTML = caption
     this.section.dawTimelineChordsDiv.innerHTML = caption
 }
+
+export function SectionOptionsFragment(section, daw) {
+    this.div = document.createElement("div")
+    
+    var nameInput = document.createElement("input")
+    nameInput.value = section.data.name
+    this.div.appendChild(nameInput)
+
+    var measuresInput = document.createElement("input")
+    measuresInput.value = section.data.measures || 1
+    measuresInput.type = "number"
+    measuresInput.min = 1
+    this.div.appendChild(measuresInput)
+
+    measuresInput.onchange = e => {
+        section.data.measures = Math.max(1, measuresInput.value)
+        daw.sizeTimelineSection(section, true)
+    }
+
+}

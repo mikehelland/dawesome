@@ -212,7 +212,7 @@ Dawesome.prototype.setupTimeline = function () {
     this.timeline.beatMarker.className = "beat-marker"
     this.timeline.div.appendChild(this.timeline.beatMarker)
 
-    this.timeline.scrollBarX = {startPercent: 0}
+    this.timeline.scrollBarX = {startPercent: 0, x: 0}
     this.timeline.scrollBarX.div = document.createElement("div")
     this.timeline.scrollBarX.div.className = "daw-timeline-horizontal-scrollbar"
     this.timeline.scrollBarX.div.style.left = this.timeline.headerWidth + "px"
@@ -241,6 +241,8 @@ Dawesome.prototype.loadTimeline = function () {
                                 (this.song.data.beatParams.subbeats * 
                                 this.song.data.beatParams.beats)
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
+    this.timeline.currentSection = Object.values(this.song.sections)[0]
+    this.timeline.currentBeat = 0 
     this.player.onBeatPlayedListeners.push((isubbeat, section) => {
         this.timeline.currentBeat = isubbeat === -1 ? 0 : isubbeat
         this.timeline.currentSection = section
@@ -320,13 +322,15 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
 Dawesome.prototype.addTimelineSection = function (section) {
     var div = document.createElement("div")
     div.className = "daw-timeline-section"
-    div.style.width = this.timeline.measureWidth + "px" //TODO figure out how many measures
-
 
     var captionDiv = document.createElement("div")
     captionDiv.innerHTML = section.data.name
     captionDiv.className = "daw-timeline-section-caption"
     div.appendChild(captionDiv)
+    captionDiv.onclick = e => {
+        this.showSectionOptionFragment(section)
+    }
+
     
     var chordsDiv = document.createElement("div")
     chordsDiv.innerHTML = this.makeChordsCaption(section)
@@ -334,6 +338,7 @@ Dawesome.prototype.addTimelineSection = function (section) {
     captionDiv.appendChild(chordsDiv)
     section.dawTimelineChordsDiv = chordsDiv
     chordsDiv.onclick = e => {
+        e.preventDefault()
         this.showChordsFragment(section)
     }
 
@@ -345,12 +350,43 @@ Dawesome.prototype.addTimelineSection = function (section) {
     this.timeline.div.appendChild(div)
     section.timelineDiv = div
     section.timelineCaptionDiv = captionDiv
-    var measures = 1 // TODO from song or section
     div.style.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed + "px"
     
-    this.timeline.sectionDivs.push({div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed})
-    this.timeline.sectionWidthUsed += measures * this.timeline.measureWidth
+    this.timeline.sectionDivs.push({section, div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed})
 
+    this.sizeTimelineSection(section)
+}
+
+Dawesome.prototype.sizeTimelineSection = function (section, resizing) {
+    if (resizing) {
+        this.timeline.sectionWidthUsed -= section.timelineDiv.clientWidth
+    } 
+    
+    section.timelineDiv.style.width = section.data.measures * this.timeline.measureWidth + "px" 
+    this.timeline.sectionWidthUsed += section.data.measures * this.timeline.measureWidth
+
+    if (resizing) {
+        let after = false
+        this.timeline.sectionWidthUsed = 0
+        let o
+        for (o of this.timeline.sectionDivs) {
+            if (after) {
+                o.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed
+            }
+            else if (o.section === section) {
+                after = true
+            }
+
+            this.timeline.sectionWidthUsed += o.div.clientWidth
+        }
+        this.refreshTimelineScrollBars()
+        this.moveTimeline(this.timeline.scrollBarX.x, 0)
+
+        let part
+        for (part in section.parts) {
+            section.parts[part].daw.updateTimelineCanvas()
+        }
+    }
 }
 
 
@@ -452,7 +488,7 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
     part.daw.timelineCanvas = canvas
     part.daw.updateTimelineCanvas = (track, subbeat, value) => {
         this.partDrawer.drawPartCanvas(part.data, canvas, 
-            this.song.data.beatParams)
+            this.song.data.beatParams, section.data.measures)
     }
     part.daw.updateTimelineCanvas()
 }
@@ -643,6 +679,7 @@ Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
 }
 
 Dawesome.prototype.moveTimeline = function (x, y) {
+    this.timeline.scrollBarX.x = x
     for (var section in this.timeline.sectionDivs) {
         this.timeline.sectionDivs[section].div.style.left = 
             this.timeline.sectionDivs[section].left - x * 
@@ -754,4 +791,14 @@ Dawesome.prototype.updateTimelineBeatMarker = function () {
                                             //this.timeline.headerWidth + 
                                             this.timeline.currentBeat * 
                                             this.timeline.subbeatLength + "px"
+}
+
+Dawesome.prototype.showSectionOptionFragment = function (section) {
+    var f = new fragments.SectionOptionsFragment(section, this)
+
+    this.wm.showFragment(f, {
+        caption: "Section Options- " + section.data.name,
+        height: 300,
+        width: 350,
+    })
 }
