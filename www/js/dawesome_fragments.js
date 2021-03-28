@@ -1,6 +1,6 @@
-"use strict";
+import SliderCanvas from "./slider_canvas.js"
 
-function MixerFragment(daw) {
+export function MixerFragment(daw) {
     this.daw = daw
     this.song = daw.song
     this.div = document.createElement("div")
@@ -81,7 +81,7 @@ MixerFragment.prototype.addMixerChannel = function (part) {
 }
 
 
-function BeatParamsFragment(song) {
+export function BeatParamsFragment(song) {
 
     this.div = document.createElement("div")
     this.paramsList = document.createElement("div")
@@ -193,7 +193,7 @@ BeatParamsFragment.prototype.refresh = function (data, source) {
 /* KEY FRAGMENT */
 
 
-function KeyParamsFragment(song) {
+export function KeyParamsFragment(song) {
     this.song = song
     this.div = document.createElement("div")
     this.keyList = document.createElement("div")
@@ -312,7 +312,7 @@ KeyParamsFragment.prototype.keyChanged = function () {
 
 /* ADD PART FRAGMENT */
 
-function AddPartFragment(addCallback) {
+export function AddPartFragment(addCallback) {
 
     this.div = document.createElement("div")
     this.addCallback = addCallback
@@ -450,7 +450,7 @@ AddPartFragment.prototype.setupSearchPage = function () {
     this.div.appendChild(this.searchGalleryDiv)
 }
 
-function SaveFragment(song) {
+export function SaveFragment(song) {
 
     var captionDiv
 
@@ -543,7 +543,7 @@ SaveFragment.prototype.post = function () {
     })
 }
 
-function OpenFragment(callback) {
+export function OpenFragment(callback) {
     this.div = document.createElement("div")
     var types = ["SONG"]
     this.searchBox = new OMGSearchBox({
@@ -554,7 +554,7 @@ function OpenFragment(callback) {
     this.searchBox.search()
 }
 
-function FXFragment(daw) {
+export function FXFragment(daw) {
     this.daw = daw
     this.player = daw.player
     this.song = daw.song
@@ -656,7 +656,7 @@ FXFragment.prototype.loadChannelFX = function (part, fx, listDiv) {
     }
 }
 
-function FXDetailFragment(fx, part, player) {
+export function FXDetailFragment(fx, part, player) {
     this.fx = fx
 
     this.div = document.createElement("div");
@@ -715,7 +715,7 @@ FXDetailFragment.prototype.onshow = function () {
 }
 
 
-function PartOptionsFragment(part, daw) {
+export function PartOptionsFragment(part, daw) {
     this.div = document.createElement("div")
     
     var nameInput = document.createElement("input")
@@ -727,14 +727,15 @@ function PartOptionsFragment(part, daw) {
             if (!daw.midi) {
                 daw.midi = new OMGMIDI()
             }
-            var index = tg.midiParts.indexOf(ff.part);
-            if (f.midiCanvas.value === "Off" && index > -1) {
-                tg.midiParts.splice(index, 1);
+            daw.midi.player = daw.player
+            var index = daw.midi.parts.indexOf(part);
+            if (this.midiCanvas.value === "Off" && index > -1) {
+                daw.midi.parts.splice(index, 1);
             }
-            else if (f.midiCanvas.value !== "Off" && index === -1) {
-                ff.part.activeMIDINotes = [];
-                ff.part.activeMIDINotes.autobeat = 1;
-                tg.midiParts.push(ff.part);
+            else if (this.midiCanvas.value !== "Off" && index === -1) {
+                part.activeMIDINotes = [];
+                part.activeMIDINotes.autobeat = 0//1;
+                daw.midi.parts.push(part);
             }
         };
 
@@ -754,4 +755,73 @@ PartOptionsFragment.prototype.onshow = function () {
     if (this.midiCanvas) {
         this.midiCanvas.sizeCanvas()
     }
+}
+
+export function ChordProgressionFragment(section, daw) {
+    this.section = section 
+    this.daw = daw
+    this.div = document.createElement("div")
+    this.div.style.display = "flex"
+    this.div.style.flexDirection = "column"
+
+    this.topRow = document.createElement("div")
+    this.topRow.className = "daw-chords-top-row"
+    this.appendButton = document.createElement("div")
+    this.appendButton.innerHTML = "Append"
+    this.appendButton.className = "daw-chords-top-button"
+    this.appendButton.onclick = () => {
+        this.appendMode = !this.appendMode
+        this.appendButton.style.backgroundColor = this.appendMode ? "darkblue" : "initial"
+    }
+
+    this.displayDiv = document.createElement("div")
+    this.displayDiv.innerHTML = daw.makeChordsCaption(section)
+    this.displayDiv.className = "daw-chords-display"
+    
+    this.clearButton = document.createElement("div")
+    this.clearButton.innerHTML = "Clear"
+    this.clearButton.className = "daw-chords-top-button"
+    this.clearButton.onclick = e => {
+        this.section.data.chordProgression = [0]
+        this.update()
+    }
+    
+    this.topRow.appendChild(this.appendButton)
+    this.topRow.appendChild(this.displayDiv)
+    this.topRow.appendChild(this.clearButton)
+    
+    this.chordListDiv = document.createElement("div")
+    this.chordListDiv.className = "daw-chords-chord-list"
+
+    this.div.appendChild(this.topRow)
+    this.div.appendChild(this.chordListDiv)
+
+    for (var i = daw.song.data.keyParams.scale.length - 1; i >= 0; i--) {
+        this.chordListDiv.appendChild(this.makeChordButton(i));
+    }
+    for (var i = 1; i < daw.song.data.keyParams.scale.length; i++) {
+        this.chordListDiv.appendChild(this.makeChordButton(i * -1));
+    }
+}
+
+ChordProgressionFragment.prototype.makeChordButton = function (chordI) {
+    var chordDiv = document.createElement("div");
+    chordDiv.className = "daw-chords-chord-button";
+    chordDiv.innerHTML = this.daw.makeChordCaption(chordI);
+    chordDiv.onclick = () => {
+        if (this.appendMode) {
+            this.section.data.chordProgression.push(chordI);
+        }
+        else {
+            this.section.data.chordProgression = [chordI];
+        }
+        this.update()
+    };
+    return chordDiv;
+};
+
+ChordProgressionFragment.prototype.update = function () {
+    var caption = this.daw.makeChordsCaption(this.section)
+    this.displayDiv.innerHTML = caption
+    this.section.dawTimelineChordsDiv.innerHTML = caption
 }

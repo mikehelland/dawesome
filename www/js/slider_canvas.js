@@ -1,6 +1,6 @@
 // note, this has a dependency on omg.audioContext buried in there
 
-function SliderCanvas(canvas, controlInfo, audioNode, data, onchange) {
+export default function SliderCanvas(canvas, controlInfo, audioNode, data, onchange) {
     var m = this;
     if (!canvas) {
         canvas = document.createElement("canvas");

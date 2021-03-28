@@ -3,6 +3,7 @@
 import OMusicContext from "/apps/music/js/omusic.js"
 import OMGEmbeddedViewerMusicDrawer from "/apps/music/js/omusic-embed-draw.js"
 import OMGWindowManager from "/js/window_manager.js"
+import * as fragments from "./dawesome_fragments.js"
 
 export default function Dawesome(config) {
     this.div = config.div
@@ -33,6 +34,9 @@ export default function Dawesome(config) {
         fetch("/data/" + config.id).then(res=>res.json()).then(json => {
             this.load(json)
         })
+    }
+    else if (config.data) {
+        this.load(config.data)
     }
     else {
         this.load()
@@ -238,10 +242,9 @@ Dawesome.prototype.loadTimeline = function () {
                                 this.song.data.beatParams.beats)
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
     this.player.onBeatPlayedListeners.push((isubbeat, section) => {
-        this.timeline.beatMarker.style.left = section.timelineDiv.offsetLeft +
-                                            //this.timeline.headerWidth + 
-                                            (isubbeat === -1 ? 0 : isubbeat) * 
-                                            this.timeline.subbeatLength + "px"
+        this.timeline.currentBeat = isubbeat === -1 ? 0 : isubbeat
+        this.timeline.currentSection = section
+        this.updateTimelineBeatMarker()
     })
     
     for (var partName in this.song.parts) {
@@ -297,7 +300,7 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
     header.optionsButton.className = "daw-timeline-options-button"
     header.optionsButton.innerHTML = "O"
     header.optionsButton.onclick = e => {
-        this.wm.showFragment(new PartOptionsFragment(part), 
+        this.wm.showFragment(new fragments.PartOptionsFragment(part, this), 
             {width:300, height:400, caption: part.data.name + " Options"})
     }
 
@@ -325,6 +328,20 @@ Dawesome.prototype.addTimelineSection = function (section) {
     captionDiv.className = "daw-timeline-section-caption"
     div.appendChild(captionDiv)
     
+    var chordsDiv = document.createElement("div")
+    chordsDiv.innerHTML = this.makeChordsCaption(section)
+    chordsDiv.className = "daw-timeline-section-tool-button"
+    captionDiv.appendChild(chordsDiv)
+    section.dawTimelineChordsDiv = chordsDiv
+    chordsDiv.onclick = e => {
+        this.showChordsFragment(section)
+    }
+
+    var measuresDiv = document.createElement("div")
+    measuresDiv.innerHTML = "1 m - 1X"
+    measuresDiv.className = "daw-timeline-section-tool-button"
+    //captionDiv.appendChild(measuresDiv)
+
     this.timeline.div.appendChild(div)
     section.timelineDiv = div
     section.timelineCaptionDiv = captionDiv
@@ -382,7 +399,7 @@ Dawesome.prototype.showAddPartWindow = function () {
         this.wm.close(win)
     }
 
-    var win = this.wm.showFragment(new AddPartFragment(addCallback), {
+    var win = this.wm.showFragment(new fragments.AddPartFragment(addCallback), {
         caption: "Add Part", 
         width: 400, height: window.innerHeight - 80, 
         x: window.innerWidth - 610, y: 40,
@@ -460,7 +477,7 @@ Dawesome.prototype.onPartAddListener = function (headPart) {
 
 Dawesome.prototype.showBeatParamsWindow = function () {
     if (!this.beatParamsFragment) {
-        this.beatParamsFragment = new BeatParamsFragment(this.song)        
+        this.beatParamsFragment = new fragments.BeatParamsFragment(this.song)        
     }
 
     this.wm.showFragment(this.beatParamsFragment, {
@@ -472,7 +489,7 @@ Dawesome.prototype.showBeatParamsWindow = function () {
 
 Dawesome.prototype.showKeyParamsWindow = function () {
     if (!this.keyParamsFragment) {
-        this.keyParamsFragment = new KeyParamsFragment(this.song)
+        this.keyParamsFragment = new fragments.KeyParamsFragment(this.song)
     }
 
     this.wm.showFragment(this.keyParamsFragment, {
@@ -540,7 +557,7 @@ Dawesome.prototype.setupMenu = function () {
 }
 
 Dawesome.prototype.showSaveWindow = function () {
-    var f = new SaveFragment(this.song)
+    var f = new fragments.SaveFragment(this.song)
 
     this.wm.showFragment(f, {
         caption: "Save",
@@ -550,7 +567,7 @@ Dawesome.prototype.showSaveWindow = function () {
 }
 
 Dawesome.prototype.showOpenWindow = function () {
-    var f = new OpenFragment(viewer => {
+    var f = new fragments.OpenFragment(viewer => {
         console.log(viewer.data)
 
         if (this.player.playing) {
@@ -631,6 +648,7 @@ Dawesome.prototype.moveTimeline = function (x, y) {
             this.timeline.sectionDivs[section].left - x * 
             this.timeline.scrollBarX.div.clientWidth + "px"
     }
+    this.updateTimelineBeatMarker()
 }
 
 Dawesome.prototype.showTransportWindow = function () {
@@ -640,19 +658,19 @@ Dawesome.prototype.showTimelineWindow = function () {
 
 }
 Dawesome.prototype.showMixerWindow = function () {
-    var f = new MixerFragment(this)
+    var f = new fragments.MixerFragment(this)
     this.wm.showFragment(f, this.mixerWindowConfig)
 }
 
 Dawesome.prototype.showFXWindow = function () {
-    var f = new FXFragment(this)
+    var f = new fragments.FXFragment(this)
     
     this.wm.showFragment(f, this.fxWindowConfig)
 
 }
 
 Dawesome.prototype.showLiveWindow = function (joinRoom) {
-    var f = new LiveFragment(this, joinRoom)
+    var f = new fragments.LiveFragment(this, joinRoom)
 
     this.wm.showFragment(f, {
         caption: "Live Collaboration",
@@ -664,12 +682,12 @@ Dawesome.prototype.showLiveWindow = function (joinRoom) {
 }
 
 Dawesome.prototype.joinLiveRoom = function (joinRoom) {
-    this.liveFragment = new LiveFragment(this, joinRoom)
+    this.liveFragment = new fragments.LiveFragment(this, joinRoom)
 }
 
 
 Dawesome.prototype.showFXDetail = function (fx, part) {
-    var f = new FXDetailFragment(fx, part, this.player)
+    var f = new fragments.FXDetailFragment(fx, part, this.player)
 
     this.wm.showFragment(f, {
         caption: fx.data.name + " - " + part.data.name,
@@ -680,7 +698,7 @@ Dawesome.prototype.showFXDetail = function (fx, part) {
 }
 
 Dawesome.prototype.showRemoveControlsWindow = function () {
-    var f = new RemoteFragment(this)
+    var f = new fragments.RemoteFragment(this)
 
     this.wm.showFragment(f, {
         caption: "Remote Controls",
@@ -689,4 +707,51 @@ Dawesome.prototype.showRemoveControlsWindow = function () {
         x: window.innerWidth - 630,
         y: window.innerHeight - 530
     })
+}
+
+Dawesome.prototype.makeChordsCaption = function (section) {
+    var chordsCaption = "";
+    section.data.chordProgression.forEach((chordI, i) => {
+        if (this.player && this.player.playing && i === this.player.section.currentChordI) {
+            chordsCaption += "<span class='current-chord'>";
+        }
+        chordsCaption += this.makeChordCaption(chordI);
+        if (this.player && this.player.playing && i === this.player.section.currentChordI) {
+            chordsCaption += "</span>";
+        }
+        chordsCaption += " "
+    });
+    return chordsCaption;
+};
+
+Dawesome.prototype.makeChordCaption = function (chordI) {
+    var index = chordI < 0 ? this.song.data.keyParams.scale.length + chordI : chordI;
+    var chord = this.song.data.keyParams.scale[index];
+    var sign = chordI < 0 ? "-" : "";
+    if (chord === 0) return sign + "I";
+    if (chord === 2) return sign + "II";
+    if (chord === 3 || chord === 4) return sign + "III";
+    if (chord === 5) return sign + "IV";
+    if (chord === 6) return sign + "Vb";
+    if (chord === 7) return sign + "V";
+    if (chord === 8 || chord === 9) return sign + "VI";
+    if (chord === 10 || chord === 11) return sign + "VII";
+    return sign + "?";
+}
+
+Dawesome.prototype.showChordsFragment = function (section) {
+    var f = new fragments.ChordProgressionFragment(section, this)
+
+    this.wm.showFragment(f, {
+        caption: "Chord Progression - " + section.data.name,
+        height: 600,
+        width: 350,
+    })
+}
+
+Dawesome.prototype.updateTimelineBeatMarker = function () {
+    this.timeline.beatMarker.style.left = this.timeline.currentSection.timelineDiv.offsetLeft +
+                                            //this.timeline.headerWidth + 
+                                            this.timeline.currentBeat * 
+                                            this.timeline.subbeatLength + "px"
 }

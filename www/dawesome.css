@@ -81,6 +81,24 @@ a, a:visited {
 .daw-timeline-section-caption-active {
     background-color: green;
 }
+
+.daw-timeline-section-tool-button {
+    display: inline-block;
+    font-size: 13px;
+    border-radius: 2px;
+    border: 1px solid #44AA44;
+    min-width: 40px;
+    margin-left: 10px;
+    padding: 2px;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.daw-timeline-section-tool-button:hover {
+    opacity: 1.0;
+}
+
+
 .daw-timeline-headers {
     position: absolute;
     z-index: 2;
@@ -108,7 +126,7 @@ a, a:visited {
     cursor: pointer;
     border: 1px solid black;
     border-radius: 5px;
-    padding: 5px 0;
+    padding: 8px 0;
     opacity: 0.7;
 }
 
@@ -272,4 +290,40 @@ a, a:visited {
     background-color: black;
     color: white;
     padding: 4px;
+}
+
+.daw-chords-chord-list {
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.daw-chords-top-row {
+    display: flex;
+}
+
+.daw-chords-chord-button {
+    flex-grow: 1;
+    text-align: center;
+    width: 100%;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.daw-chords-top-button:hover, .daw-chords-chord-button:hover {
+    opacity: 1;
+}
+
+.daw-chords-display {
+    background-color: black;
+    flex-grow: 1;
+    padding: 12px;
+    text-align: center;
+}
+
+.daw-chords-top-button {
+    padding: 12px;
+    opacity: 0.8;
+    cursor: pointer;
 }
