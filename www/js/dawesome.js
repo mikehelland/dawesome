@@ -10,8 +10,14 @@ export default function Dawesome(config) {
 
     this.playChar = "&nbsp;&#9654;"
     this.stopChar = "&#9724;"
+    this.recChar = "\u23FA"
     
-    this.musicContext = new OMusicContext()
+    if (config.musicContext) {
+        this.musicContext = config.musicContext
+    }
+    else {
+        this.musicContext = new OMusicContext()
+    }
     this.musicContext.loadFullSoundSets = true
 
     this.partDrawer = new OMGEmbeddedViewerMusicDrawer()
@@ -32,24 +38,21 @@ export default function Dawesome(config) {
     }
     else if (config.id) {
         fetch("/data/" + config.id).then(res=>res.json()).then(json => {
-            this.load(json)
+            this.load({data: json})
         })
     }
-    else if (config.data) {
-        this.load(config.data)
-    }
     else {
-        this.load()
+        this.load(config)
         //this.showWelcomeWindow()
     }
 }
 
-Dawesome.prototype.load = async function (data) {
+Dawesome.prototype.load = async function (config) {
     this.wm.clearAll()
     this.setupTransport()
     this.setupTimeline()
     
-    await this.loadSong(data)
+    await this.loadSong(config)
     
     this.showMixerWindow()
     this.showFXWindow()
@@ -65,7 +68,7 @@ Dawesome.prototype.load = async function (data) {
     }
 }
 
-Dawesome.prototype.loadSong = async function (data) {
+Dawesome.prototype.loadSong = async function (config) {
     /*var defaultSong;
     var blank
     if (blank) {
@@ -79,9 +82,15 @@ Dawesome.prototype.loadSong = async function (data) {
         });
     */
 
-    var {song, player} = await this.musicContext.load(data)
-    this.song = song
-    this.player = player
+    if (config && config.player && config.song) {
+        this.song = config.song
+        this.player = config.player
+    }
+    else {
+        var {song, player} = await this.musicContext.load(config ? config.data : undefined)
+        this.song = song
+        this.player = player    
+    }
 
     // set the the first section, and make one if needed
     this.section = Object.values(this.song.sections)[0]
@@ -105,6 +114,10 @@ Dawesome.prototype.setupTransport = function () {
     this.transport.playButtonEl.className = "daw-transport-play-button"
     this.transport.playButtonEl.innerHTML = this.playChar
 
+    this.transport.recordButtonEl = document.createElement("div")
+    this.transport.recordButtonEl.className = "daw-transport-play-button"
+    this.transport.recordButtonEl.innerHTML = this.recChar
+
     this.transport.beatParamsEl = document.createElement("div")
     this.transport.beatParamsEl.className = "daw-transport-control"
 
@@ -120,6 +133,7 @@ Dawesome.prototype.setupTransport = function () {
 
     this.transport.div = this.transport.window.contentDiv
     this.transport.div.appendChild(this.transport.playButtonEl)
+    this.transport.div.appendChild(this.transport.recordButtonEl)
     this.transport.div.appendChild(this.transport.beatParamsEl)
     this.transport.div.appendChild(this.transport.keyParamsEl)
     this.transport.div.appendChild(this.transport.loopSectionEl)
@@ -132,6 +146,17 @@ Dawesome.prototype.setupTransport = function () {
         else {
             this.player.play()
             this.transport.playButtonEl.innerHTML = this.stopChar
+        }
+    }
+
+    this.transport.recordButtonEl.onclick = e => {
+        if (!this.recordingArmed) {
+            this.recordingArmed = true
+            this.transport.recordButtonEl.style.backgroundColor = "red"
+        }
+        else {
+            this.recordingArmed = false
+            this.transport.recordButtonEl.style.backgroundColor = "initial"
         }
     }
 
@@ -159,7 +184,7 @@ Dawesome.prototype.setupTransport = function () {
                 this.song.data.beatParams.subbeats + " " + this.song.data.beatParams.bpm + " bpm"
     }
     this.transport.updateKey = () => {
-        this.transport.keyParamsEl.innerHTML = omg.ui.getKeyCaption(this.song.data.keyParams)
+        this.transport.keyParamsEl.innerHTML = this.musicContext.getKeyCaption(this.song.data.keyParams)
     }
 }
 
@@ -171,7 +196,7 @@ Dawesome.prototype.setupTimeline = function () {
     this.timeline.div = this.timeline.window.contentDiv
     this.timeline.div.classList.add("daw-timeline")
 
-    this.timeline.measureWidth = 500
+    this.timeline.measureWidth = 200
     this.timeline.headerWidth = 200
     this.timeline.partHeight = 60
     this.timeline.subbeatLength = 30
@@ -297,6 +322,9 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
     header.muteButton.onclick = e => {
         this.musicContext.mutePart(part, !part.data.audioParams.mute)
     }
+    if (part.data.audioParams.mute) {
+        header.muteButton.style.backgroundColor = "red"
+    }
 
     header.optionsButton = document.createElement("div")
     header.optionsButton.className = "daw-timeline-options-button"
@@ -402,7 +430,7 @@ Dawesome.prototype.newPartCanvas = function (part) {
     return div
 }
 
-Dawesome.prototype.showPartDetail = function (part) {
+Dawesome.prototype.showPartDetail = async function (part) {
 
     //check to see if the window already exists
     part.detailWindow = this.wm.newWindow({
@@ -412,11 +440,27 @@ Dawesome.prototype.showPartDetail = function (part) {
     })
 
     if (part.data.surface.url === "PRESET_SEQUENCER") {
+        let o = await import("/apps/music/js/sequencer_surface.js")
+        let OMGDrumMachine = o.default
         part.detailSurface = new OMGDrumMachine(part.detailWindow.contentDiv, part)
     }
     else {
+        let o = await import("/apps/music/js/vertical_surface.js")
+        let OMGMelodyMaker = o.default
         part.detailSurface = new OMGMelodyMaker(part.detailWindow.contentDiv, part, this.player)
     }
+
+    var listener = (isubbeat) => {
+        part.detailSurface.updateBeatMarker(isubbeat);
+    }
+    this.player.onBeatPlayedListeners.push(listener)
+    part.detailWindow.onhide = () => {
+        var i = this.player.onBeatPlayedListeners.indexOf(listener)
+        if (i > -1) {
+            this.player.onBeatPlayedListeners.splice(i, -1)
+        }
+    }
+
     part.detailSurface.readOnly = false
     part.detailSurface.draw()
 
@@ -556,6 +600,13 @@ Dawesome.prototype.setupSongListeners = function () {
     this.song.onPartChangeListeners.push((part, track, subbeat, value, source) => {
         part.daw.updateTimelineCanvas()
     })
+
+    this.player.onreachedend = () => {
+        if (this.recordingArmed) {
+            this.extendSong()
+            return true
+        }
+    }
 }
 
 Dawesome.prototype.setupMenu = function () {
@@ -610,7 +661,7 @@ Dawesome.prototype.showOpenWindow = function () {
             this.player.stop()
         }
 
-        this.load(viewer.data)
+        this.load({data: viewer.data})
         
     })
 
@@ -801,4 +852,40 @@ Dawesome.prototype.showSectionOptionFragment = function (section) {
         height: 300,
         width: 350,
     })
+}
+
+Dawesome.prototype.extendSong = function () {
+    var startCopy = this.song.data.beatParams.subbeats * this.song.data.beatParams.beats * (this.player.section.data.measures - 1)
+    var startPaste = this.song.data.beatParams.subbeats * this.song.data.beatParams.beats * this.player.section.data.measures
+
+    this.player.section.data.measures++
+
+    for (var partName in this.player.section.parts) {
+        if (this.player.section.parts[partName].data.tracks) {
+            this.extendPartTracks(this.player.section.parts[partName], startCopy, startPaste)
+        }
+    }
+
+
+    this.sizeTimelineSection(this.player.section, true)
+
+}
+
+Dawesome.prototype.extendPartTracks = function (part, startCopy, startPaste) {
+
+    console.log(part, startCopy, startPaste)
+    var j 
+    for (var track of part.data.tracks) {
+        j = 0
+        for (var i = startCopy; i < startPaste; i++) {
+
+            if (track.data[i]) {
+                track.data[j + startPaste] = track.data[i]
+            }
+            j++
+
+        }
+
+    }
+
 }

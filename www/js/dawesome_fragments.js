@@ -74,6 +74,7 @@ MixerFragment.prototype.addMixerChannel = function (part) {
     }*/
 
     this.parts[part.data.name] = {volumeSlider, panSlider, refresh: () => {
+            volumeSlider.controlInfo.color = part.data.audioParams.mute ? "#880000" : "#008800"
             volumeSlider.sizeCanvas()
             panSlider.sizeCanvas()
         }
