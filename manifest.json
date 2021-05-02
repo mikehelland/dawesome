@@ -1,0 +1,6 @@
+{
+	"name": "Dawesome",
+    "activities": [
+		{"name": "Music", "url": ".", "edits": ["SONG","PART"], "uses": ["SOUNDSET"]}
+	]
+}
