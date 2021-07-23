@@ -247,6 +247,24 @@ Dawesome.prototype.setupTimeline = function () {
     this.timeline.scrollBarX.div.appendChild(this.timeline.scrollBarX.canvas)
     this.timeline.scrollBarX.context = this.timeline.scrollBarX.canvas.getContext("2d")
     this.setupScrollBarEvents(this.timeline.scrollBarX)
+
+    this.timeline.zoomXOutButton = document.createElement("button")
+    this.timeline.zoomXInButton = document.createElement("button")
+    this.timeline.zoomXInButton.innerHTML = "+"
+    this.timeline.zoomXOutButton.innerHTML = "-"
+    this.timeline.zoomXOutButton.className = "daw-timeline-horizontal-zoom"
+    this.timeline.zoomXInButton.className = "daw-timeline-horizontal-zoom"
+    
+    this.timeline.scrollBarX.div.appendChild(this.timeline.zoomXOutButton)
+    this.timeline.scrollBarX.div.appendChild(this.timeline.zoomXInButton)
+    this.timeline.zoomXInButton.onclick = e => {
+        this.timeline.measureWidth += 50
+        this.resizeTimelineSections()
+    }
+    this.timeline.zoomXOutButton.onclick = e => {
+        this.timeline.measureWidth = Math.max(50, this.timeline.measureWidth - 50)
+        this.resizeTimelineSections()
+    }
 }
 
 Dawesome.prototype.loadTimeline = function () {
@@ -621,7 +639,7 @@ Dawesome.prototype.setupMenu = function () {
                 {separator: true},
                 {name: "Settings", onclick: () => this.showSettingsWindow()},
                 {separator: true},
-                {name: "OMG Home", onclick: () => this.showSaveWindow()}
+                {name: "OMG Home", onclick: () => window.location = "/"}
             ]},
             {name: "Window", items: [
                 {name: "Transport", onclick: () => this.showTransportWindow()},
@@ -680,14 +698,16 @@ Dawesome.prototype.newSong = function () {
 
 Dawesome.prototype.refreshTimelineScrollBars = function () {
     
+    this.timeline.scrollBarX.canvas.width = this.timeline.scrollBarX.canvas.clientWidth
+    this.timeline.scrollBarX.canvas.height = this.timeline.scrollBarX.canvas.clientHeight
+    this.timeline.scrollBarX.context.fillStyle = "#404040"
+    this.timeline.scrollBarX.context.fillRect(0, 0, this.timeline.scrollBarX.canvas.width, this.timeline.scrollBarX.canvas.height)
+    
     if (this.timeline.div.clientWidth - this.timeline.headerWidth < this.timeline.sectionWidthUsed) {
-        this.timeline.scrollBarX.div.style.display = "block"
-        this.timeline.scrollBarX.canvas.width = this.timeline.scrollBarX.canvas.clientWidth
-        this.timeline.scrollBarX.canvas.height = this.timeline.scrollBarX.canvas.clientHeight
-        this.timeline.scrollBarX.context.fillStyle = "#404040"
-        this.timeline.scrollBarX.context.fillRect(0, 0, this.timeline.scrollBarX.canvas.width, this.timeline.scrollBarX.canvas.height)
+        //this.timeline.scrollBarX.div.style.display = "flex"
         this.timeline.scrollBarX.context.fillStyle = "#888888"
         this.timeline.scrollBarX.widthPercent = this.timeline.scrollBarX.canvas.width / this.timeline.sectionWidthUsed
+        console.log("widthPercent", this.timeline.scrollBarX.widthPercent)
         this.timeline.scrollBarX.context.fillRect(
             this.timeline.scrollBarX.startPercent * this.timeline.scrollBarX.canvas.width, 
             0, 
@@ -696,7 +716,7 @@ Dawesome.prototype.refreshTimelineScrollBars = function () {
 
     }
     else {
-        this.timeline.scrollBarX.div.style.display = "none"
+        //this.timeline.scrollBarX.div.style.display = "none"
     }
 }
 
@@ -734,16 +754,16 @@ Dawesome.prototype.moveTimeline = function (x, y) {
     for (var section in this.timeline.sectionDivs) {
         this.timeline.sectionDivs[section].div.style.left = 
             this.timeline.sectionDivs[section].left - x * 
-            this.timeline.scrollBarX.div.clientWidth + "px"
+            this.timeline.scrollBarX.canvas.clientWidth + "px"
     }
     this.updateTimelineBeatMarker()
 }
 
 Dawesome.prototype.showTransportWindow = function () {
-
+    this.wm.show(this.transport.window)
 }
 Dawesome.prototype.showTimelineWindow = function () {
-
+    this.wm.show(this.timeline.window)
 }
 Dawesome.prototype.showMixerWindow = function () {
     var f = new fragments.MixerFragment(this)
@@ -888,4 +908,28 @@ Dawesome.prototype.extendPartTracks = function (part, startCopy, startPaste) {
 
     }
 
+}
+
+Dawesome.prototype.resizeTimelineSections = function () {
+    var x = this.timeline.scrollBarX.x
+    var left
+    var used = 0
+    var width
+    for (var section in this.timeline.sectionDivs) {
+        width = this.timeline.measureWidth * 1 
+        left = used + this.timeline.headerWidth
+        
+        this.timeline.sectionDivs[section].div.style.width = width + "px"
+
+        this.timeline.sectionDivs[section].div.style.left = left + "px"
+            //this.timeline.sectionDivs[section].left - x * 
+            //this.timeline.scrollBarX.canvas.clientWidth + "px"
+        
+        this.timeline.sectionDivs[section].left = left
+        used += width
+        
+    }
+    this.timeline.sectionWidthUsed = used
+    this.refreshTimelineScrollBars()
+    this.updateTimelineBeatMarker()
 }

@@ -154,10 +154,12 @@ a, a:visited {
     right: 0;
     height: 30px;
     z-index: 2;
+    display:flex;
 }
 .daw-timeline-horizontal-scrollbar-canvas {
     height: 100%;
-    width: 100%;
+    flex-grow: 1;
+    width:1px;
     background-color: darkblue;
 }
 
@@ -326,4 +328,10 @@ a, a:visited {
     padding: 12px;
     opacity: 0.8;
     cursor: pointer;
+}
+
+.daw-timeline-horizontal-zoom {
+    position:relative;
+    bottom:0px;
+    right:0px;
 }
