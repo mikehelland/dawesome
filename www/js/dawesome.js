@@ -307,8 +307,6 @@ Dawesome.prototype.loadTimeline = function () {
             }
 
             part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
-            console.log(part.data.name)
-
         }
 
         this.addSectionPartsToTimeline(section)
@@ -707,7 +705,6 @@ Dawesome.prototype.refreshTimelineScrollBars = function () {
         //this.timeline.scrollBarX.div.style.display = "flex"
         this.timeline.scrollBarX.context.fillStyle = "#888888"
         this.timeline.scrollBarX.widthPercent = this.timeline.scrollBarX.canvas.width / this.timeline.sectionWidthUsed
-        console.log("widthPercent", this.timeline.scrollBarX.widthPercent)
         this.timeline.scrollBarX.context.fillRect(
             this.timeline.scrollBarX.startPercent * this.timeline.scrollBarX.canvas.width, 
             0, 
@@ -744,10 +741,6 @@ Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
             scrollBar.isTouching = false
         }
     }
-
-    
-
-    
 
 }
 

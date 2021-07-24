@@ -196,6 +196,9 @@ BeatParamsFragment.prototype.refresh = function (data, source) {
 
 export function KeyParamsFragment(song) {
     this.song = song
+    this.keys = song.musicContext.keys
+    this.scales = song.musicContext.scales
+
     this.div = document.createElement("div")
     this.keyList = document.createElement("div")
     this.scaleList = document.createElement("div")
@@ -224,8 +227,8 @@ KeyParamsFragment.prototype.onshow = function () {
     if (this.lastScale) {
         this.lastScale.classList.remove(this.selectedCSSClass);
     }
-    for (var i = 0; i < omg.ui.scales.length; i++) {
-        if (omg.ui.scales[i].value.join() === this.song.data.keyParams.scale.join()) {
+    for (var i = 0; i < this.scales.length; i++) {
+        if (this.scales[i].value.join() === this.song.data.keyParams.scale.join()) {
             let scaleDiv = this.scaleList.childNodes[i]
             scaleDiv.classList.add(this.selectedCSSClass);
             this.lastScale = scaleDiv;
@@ -248,8 +251,8 @@ KeyParamsFragment.prototype.listener = function (keyParams, source) {
     this.lastKey = this.keyList.children[keyParams.rootNote];
     this.lastKey.classList.add("selected-list-item");
     
-    for (var i = 0; i < omg.ui.scales.length; i++) {
-        if (omg.ui.scales[i].value.join() === keyParams.scale.join()) {
+    for (var i = 0; i < this.scales.length; i++) {
+        if (this.scales[i].value.join() === keyParams.scale.join()) {
             if (this.lastScale) {
                 this.lastScale.classList.remove("selected-list-item");
             }
@@ -265,7 +268,7 @@ KeyParamsFragment.prototype.setup = function () {
     this.keyList.innerHTML = "";
     this.scaleList.innerHTML = "";
     var keyI = 0;
-    omg.ui.keys.forEach((key, i) => {
+    this.keys.forEach((key, i) => {
         var keyDiv = document.createElement("div");
         keyDiv.className = "daw-key-select-button";
         keyDiv.innerHTML = key;
@@ -283,7 +286,7 @@ KeyParamsFragment.prototype.setup = function () {
         this.keyList.appendChild(keyDiv);
         keyI++;
     });
-    omg.ui.scales.forEach((scale) => {
+    this.scales.forEach((scale) => {
         var scaleDiv = document.createElement("div");
         scaleDiv.className = "daw-scale-select-button";
         scaleDiv.innerHTML = scale.name;
