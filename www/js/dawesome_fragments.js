@@ -614,7 +614,7 @@ SaveFragment.prototype.post = function () {
 
         this.div.removeChild(this.saveDiv)
 
-        var el = document.createElement("div")
+        var el = document.createElement("h3")
         el.innerHTML = "Saved!"
         this.div.appendChild(el)
 
@@ -624,7 +624,14 @@ SaveFragment.prototype.post = function () {
 
         el = document.createElement("input")
         el.value = window.location.origin + "/view/" + res.id
+        el.style.width = "100%"
         this.div.appendChild(el)
+
+        el = document.createElement("a")
+        el.href = window.location.origin + "/view/" + res.id
+        el.innerHTML = "Go to URL"
+        this.div.appendChild(el)
+
 
         // show saved
         // timeout close

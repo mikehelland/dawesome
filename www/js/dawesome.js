@@ -32,6 +32,7 @@ export default function Dawesome(config) {
 
     if (config.showMainMenu) {
         this.setupMenu()
+        this.setupHotKeys()
     }
 
     if (config.room) {
@@ -373,6 +374,7 @@ Dawesome.prototype.addTimelineSection = function (section) {
     captionDiv.className = "daw-timeline-section-caption"
     div.appendChild(captionDiv)
     captionDiv.onclick = e => {
+        e.preventDefault()
         this.showSectionOptionFragment(section)
     }
 
@@ -384,6 +386,7 @@ Dawesome.prototype.addTimelineSection = function (section) {
     section.dawTimelineChordsDiv = chordsDiv
     chordsDiv.onclick = e => {
         e.preventDefault()
+        e.stopPropagation()
         this.showChordsFragment(section)
     }
 
@@ -400,6 +403,18 @@ Dawesome.prototype.addTimelineSection = function (section) {
     this.timeline.sectionDivs.push({section, div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed})
 
     this.sizeTimelineSection(section)
+
+    captionDiv.oncontextmenu = e => {
+        e.preventDefault()
+        this.wm.showSubMenu({
+            div, 
+            items: [
+                {name: "Options", onclick: () => this.showSectionOptionFragment(section)}
+                    
+            ],
+            toTheRight: true
+        })
+    }
 }
 
 Dawesome.prototype.sizeTimelineSection = function (section, resizing) {
@@ -938,4 +953,16 @@ Dawesome.prototype.resizeTimelineSections = function () {
                                 this.song.data.beatParams.beats)
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"    
     this.updateTimelineBeatMarker()
+}
+
+Dawesome.prototype.setupHotKeys = function () {
+    window.onkeypress = (e) => {
+        if (e.key === " " && e.target.tagName === "BODY") {
+            this.transport.playButtonEl.onclick()
+        }
+    
+        if (e.key === "r" && !tg.player.playing) {
+            //tg.startRecording()
+        }
+    };
 }
