@@ -720,7 +720,7 @@ Dawesome.prototype.refreshTimelineScrollBars = function () {
 Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
 
     scrollBar.canvas.onmousedown = e => {
-        scrollBar.offsets = omg.ui.totalOffsets(scrollBar.canvas);
+        scrollBar.offsets = this.wm.getTotalOffsets(scrollBar.canvas);
         scrollBar.startX = e.clientX //- scrollBar.offsets.left
         scrollBar.isTouching = true
 
