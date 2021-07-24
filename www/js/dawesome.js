@@ -4,6 +4,7 @@ import OMusicContext from "/apps/music/js/omusic.js"
 import OMGEmbeddedViewerMusicDrawer from "/apps/music/js/omusic-embed-draw.js"
 import OMGWindowManager from "/js/window_manager.js"
 import * as fragments from "./dawesome_fragments.js"
+import * as liveFragments from "./dawesome_live.js"
 
 export default function Dawesome(config) {
     this.div = config.div
@@ -775,7 +776,7 @@ Dawesome.prototype.showFXWindow = function () {
 }
 
 Dawesome.prototype.showLiveWindow = function (joinRoom) {
-    var f = new fragments.LiveFragment(this, joinRoom)
+    var f = new liveFragments.LiveFragment(this, joinRoom)
 
     this.wm.showFragment(f, {
         caption: "Live Collaboration",
@@ -787,7 +788,7 @@ Dawesome.prototype.showLiveWindow = function (joinRoom) {
 }
 
 Dawesome.prototype.joinLiveRoom = function (joinRoom) {
-    this.liveFragment = new fragments.LiveFragment(this, joinRoom)
+    this.liveFragment = new liveFragments.LiveFragment(this, joinRoom)
 }
 
 
@@ -803,7 +804,7 @@ Dawesome.prototype.showFXDetail = function (fx, part) {
 }
 
 Dawesome.prototype.showRemoveControlsWindow = function () {
-    var f = new fragments.RemoteFragment(this)
+    var f = new liveFragments.RemoteFragment(this)
 
     this.wm.showFragment(f, {
         caption: "Remote Controls",

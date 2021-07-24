@@ -1,4 +1,4 @@
-function LiveFragment(daw, joinRoom) {
+export function LiveFragment(daw, joinRoom) {
     this.daw = daw
 
     // todo I don't think this should be here,
@@ -190,7 +190,7 @@ LiveFragment.prototype.callUser = function (name, user) {
 }
 
 
-function RemoteFragment(daw) {
+export function RemoteFragment(daw) {
 
     this.daw = daw
     this.username = "guest" + Math.trunc(Math.random() * 100000)
