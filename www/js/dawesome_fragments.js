@@ -320,21 +320,54 @@ export function AddPartFragment(addCallback) {
     this.selectSoundType = document.createElement("select")
     this.selectSoundType.innerHTML = `
         <option value="soundfont">SoundFont</option>
-        <option value="synth">Synth</option>
-        <option value="search">Search Gallery</option>`
+        <option value="search">Search Gallery</option>
+        <option value="drum">Drums</option>
+        <option value="synth">Synth</option>`
     this.selectSoundType.onchange = e => {
         if (this.selectSoundType.value === "soundfont") {
             this.searchGalleryDiv.style.display = "none"
             this.selectSoundFontDiv.style.display = "block"
+            if (this.synthDiv){
+                this.synthDiv.style.display = "none"
+            }
+            if (this.drumDiv) {
+                this.drumDiv.style.display = "none"
+            }
         }
         else if (this.selectSoundType.value === "search") {
+            if (this.synthDiv){
+                this.synthDiv.style.display = "none"
+            }
+            if (this.drumDiv) {
+                this.drumDiv.style.display = "none"
+            }
             this.selectSoundFontDiv.style.display = "none"
             this.searchGalleryDiv.style.display = "block"
             this.gallerySearchBox.search()
 
         }
-        else if (this.selectSoundType.value === "soundfont") {
-
+        else if (this.selectSoundType.value === "synth") {
+            this.selectSoundFontDiv.style.display = "none"
+            this.searchGalleryDiv.style.display = "none"
+            if (this.drumDiv) {
+                this.drumDiv.style.display = "none"
+            }
+            if (!this.synthDiv) {
+                this.setupSynthPage()
+            }
+            this.synthDiv.style.display = "block"            
+        }
+        else if (this.selectSoundType.value === "drum") {
+            this.selectSoundFontDiv.style.display = "none"
+            this.searchGalleryDiv.style.display = "none"
+            if (this.synthDiv) {
+                this.synthDiv.style.display = "none"            
+            }
+            if (!this.drumDiv) {
+                this.setupDrumPage()
+            }
+            this.drumDiv.style.display = "block"
+            
         }
     }
 
@@ -449,6 +482,57 @@ AddPartFragment.prototype.setupSearchPage = function () {
 
     this.searchGalleryDiv.style.display = "none"
     this.div.appendChild(this.searchGalleryDiv)
+}
+
+AddPartFragment.prototype.setupSynthPage = function () {
+
+    this.synthDiv = document.createElement("div")
+
+    fetch("/apps/music/js/libs/viktor/viktor_presets.json")
+    .then(e => e.json()).then(results => {
+        Object.keys(results).forEach((name) => {
+            var newDiv = document.createElement("div");
+            newDiv.className = "daw-add-part-search-result"
+            newDiv.innerHTML = name;
+            this.synthDiv.appendChild(newDiv);
+            newDiv.onclick = e => {
+                if (this.addCallback) {
+                    this.addCallback({soundSet: {name: name, patch: results[name],"octave":5,
+                    "lowNote":0,"highNote":108,"chromatic":true}})
+                }
+                //tg.addPartFragment.addSynth(name, json[name], "addPartFragment");
+            };
+        })
+
+    }).catch(e=>console.warn(e));
+    
+
+    this.div.appendChild(this.synthDiv)
+}
+
+AddPartFragment.prototype.setupDrumPage = function () {
+
+    this.drumDiv = document.createElement("div")
+
+    fetch("https://mikehelland.github.io/omg-sounds/drums/shiny_happy_kits.json")
+    .then(e => e.json()).then(results => {
+        results.forEach((result) => {
+            var newDiv = document.createElement("div");
+            newDiv.className = "daw-add-part-search-result"
+            newDiv.innerHTML = result.name;
+            this.drumDiv.appendChild(newDiv);
+            newDiv.onclick = e => {
+                if (this.addCallback) {
+                    this.addCallback({soundSet: result})
+                }
+                //tg.addPartFragment.addSynth(name, json[name], "addPartFragment");
+            };
+        })
+
+    }).catch(e=>console.warn(e));
+    
+
+    this.div.appendChild(this.drumDiv)
 }
 
 export function SaveFragment(song) {
