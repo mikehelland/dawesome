@@ -160,7 +160,6 @@ a, a:visited {
     height: 100%;
     flex-grow: 1;
     width:1px;
-    background-color: darkblue;
 }
 
 .daw-mixer-channel {

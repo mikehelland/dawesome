@@ -551,6 +551,8 @@ Dawesome.prototype.addPartToTimeline = function (part, section) {
             this.song.data.beatParams, section.data.measures)
     }
     part.daw.updateTimelineCanvas()
+
+    canvas.refresh = part.daw.updateTimelineCanvas
 }
 
 Dawesome.prototype.onPartAddListener = function (headPart) {
@@ -910,18 +912,22 @@ Dawesome.prototype.resizeTimelineSections = function () {
     var left
     var used = 0
     var width
-    for (var section in this.timeline.sectionDivs) {
-        width = this.timeline.measureWidth * 1 
+    for (var sectionInfo of this.timeline.sectionDivs) {
+        width = this.timeline.measureWidth * (sectionInfo.section.data.measures || 1) 
         left = used + this.timeline.headerWidth
         
-        this.timeline.sectionDivs[section].div.style.width = width + "px"
+        sectionInfo.div.style.width = width + "px"
 
-        this.timeline.sectionDivs[section].div.style.left = left + "px"
-            //this.timeline.sectionDivs[section].left - x * 
-            //this.timeline.scrollBarX.canvas.clientWidth + "px"
+        sectionInfo.div.style.left = left + "px"
         
-        this.timeline.sectionDivs[section].left = left
+        sectionInfo.left = left
         used += width
+
+        var canvases = sectionInfo.div.getElementsByTagName("canvas")
+        for (var i = 0; i < canvases.length; i++) {
+            canvases[i].width = width
+            canvases[i].refresh()
+        }
         
     }
     this.timeline.sectionWidthUsed = used
