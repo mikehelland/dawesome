@@ -856,7 +856,6 @@ Dawesome.prototype.showChordsFragment = function (section) {
 
 Dawesome.prototype.updateTimelineBeatMarker = function () {
     this.timeline.beatMarker.style.left = this.timeline.currentSection.timelineDiv.offsetLeft +
-                                            //this.timeline.headerWidth + 
                                             this.timeline.currentBeat * 
                                             this.timeline.subbeatLength + "px"
 }
@@ -932,5 +931,10 @@ Dawesome.prototype.resizeTimelineSections = function () {
     }
     this.timeline.sectionWidthUsed = used
     this.refreshTimelineScrollBars()
+
+    this.timeline.subbeatLength = this.timeline.measureWidth / 
+                                (this.song.data.beatParams.subbeats * 
+                                this.song.data.beatParams.beats)
+    this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"    
     this.updateTimelineBeatMarker()
 }
