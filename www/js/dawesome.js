@@ -726,26 +726,28 @@ Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
         scrollBar.offsets = omg.ui.totalOffsets(scrollBar.canvas);
         scrollBar.startX = e.clientX //- scrollBar.offsets.left
         scrollBar.isTouching = true
-    }
 
-    // this works when there's only a couple sections, otherwise too short
-    scrollBar.canvas.onmousemove = e => {
-        if (scrollBar.isTouching) {
-            //var dx = (e.clientX - scrollBar.offsets.left) - scrollBar.startX 
-            var dx = e.clientX - scrollBar.startX 
-            scrollBar.startPercent = Math.min(1 - scrollBar.widthPercent, Math.max(0, scrollBar.startPercent + dx / scrollBar.div.clientWidth))
-            scrollBar.startX = e.clientX// - scrollBar.offsets.left
-            this.moveTimeline(scrollBar.startPercent / (scrollBar.widthPercent), 0)
-            this.refreshTimelineScrollBars()
+        // this works when there's only a couple sections, otherwise too short
+        this.wm.div.onmousemove = e => {
+            if (scrollBar.isTouching) {
+                //var dx = (e.clientX - scrollBar.offsets.left) - scrollBar.startX 
+                var dx = e.clientX - scrollBar.startX 
+                scrollBar.startPercent = Math.min(1 - scrollBar.widthPercent, Math.max(0, scrollBar.startPercent + dx / scrollBar.div.clientWidth))
+                scrollBar.startX = e.clientX// - scrollBar.offsets.left
+                this.moveTimeline(scrollBar.startPercent / (scrollBar.widthPercent), 0)
+                this.refreshTimelineScrollBars()
+            }
+        }
+
+        this.wm.div.onmouseup = e => {
+            this.wm.div.onmousemove = undefined
+            scrollBar.isTouching = false
         }
     }
 
-    scrollBar.canvas.onmouseleave = e => {
-        scrollBar.isTouching = false
-    }
-    scrollBar.canvas.onmouseup = e => {
-        scrollBar.isTouching = false
-    }
+    
+
+    
 
 }
 
