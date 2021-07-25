@@ -166,10 +166,10 @@ Dawesome.prototype.setupTransport = function () {
         if (!this.player.loopSection) {
             this.player.loopSection = this.player.section
             this.transport.loopSectionEl.classList.add("daw-transport-control-active")
-            this.player.section.timelineCaptionDiv.classList.add("daw-timeline-section-caption-active")
+            this.player.section.timelineHeaderDiv.classList.add("daw-timeline-section-caption-active")
         }
         else {
-            this.player.section.timelineCaptionDiv.classList.remove("daw-timeline-section-caption-active")
+            this.player.section.timelineHeaderDiv.classList.remove("daw-timeline-section-caption-active")
             this.player.loopSection = null
             this.transport.loopSectionEl.classList.remove("daw-transport-control-active")
         }
@@ -369,20 +369,22 @@ Dawesome.prototype.addTimelineSection = function (section) {
     var div = document.createElement("div")
     div.className = "daw-timeline-section"
 
-    var captionDiv = document.createElement("div")
-    captionDiv.innerHTML = section.data.name
-    captionDiv.className = "daw-timeline-section-caption"
-    div.appendChild(captionDiv)
-    captionDiv.onclick = e => {
+    var headerDiv = document.createElement("div")
+    headerDiv.className = "daw-timeline-section-caption"
+    div.appendChild(headerDiv)
+    headerDiv.onclick = e => {
         e.preventDefault()
         this.showSectionOptionFragment(section)
     }
 
+    var captionDiv = document.createElement("span")
+    captionDiv.innerHTML = section.data.name
+    headerDiv.appendChild(captionDiv)
     
     var chordsDiv = document.createElement("div")
     chordsDiv.innerHTML = this.makeChordsCaption(section)
     chordsDiv.className = "daw-timeline-section-tool-button"
-    captionDiv.appendChild(chordsDiv)
+    headerDiv.appendChild(chordsDiv)
     section.dawTimelineChordsDiv = chordsDiv
     chordsDiv.onclick = e => {
         e.preventDefault()
@@ -397,15 +399,15 @@ Dawesome.prototype.addTimelineSection = function (section) {
 
     this.timeline.div.appendChild(div)
     section.timelineDiv = div
-    section.timelineCaptionDiv = captionDiv
-    section.timelineInfo = {section, div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed}
+    section.timelineHeaderDiv = headerDiv
+    section.timelineInfo = {section, div, captionDiv, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed}
     div.style.left = section.timelineInfo.left + "px"
     
     this.timeline.sectionDivs.push(section.timelineInfo)
 
     this.sizeTimelineSection(section)
 
-    captionDiv.oncontextmenu = e => {
+    headerDiv.oncontextmenu = e => {
         e.preventDefault()
         this.wm.showSubMenu({
             div, 

@@ -936,6 +936,13 @@ export function SectionOptionsFragment(section, daw) {
     nameInput.value = section.data.name
     this.div.appendChild(nameInput)
 
+    nameInput.onchange = e => {
+        section.data.name = nameInput.value
+        section.timelineInfo.captionDiv.innerHTML = nameInput.value
+        //update caption of this window?
+        //todo does this mess with the arrangement?
+    }
+
     var measuresInput = document.createElement("input")
     measuresInput.value = section.data.measures || 1
     measuresInput.type = "number"
