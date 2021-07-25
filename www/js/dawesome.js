@@ -398,9 +398,10 @@ Dawesome.prototype.addTimelineSection = function (section) {
     this.timeline.div.appendChild(div)
     section.timelineDiv = div
     section.timelineCaptionDiv = captionDiv
-    div.style.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed + "px"
+    section.timelineInfo = {section, div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed}
+    div.style.left = section.timelineInfo.left + "px"
     
-    this.timeline.sectionDivs.push({section, div, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed})
+    this.timeline.sectionDivs.push(section.timelineInfo)
 
     this.sizeTimelineSection(section)
 
@@ -409,7 +410,10 @@ Dawesome.prototype.addTimelineSection = function (section) {
         this.wm.showSubMenu({
             div, 
             items: [
-                {name: "Options", onclick: () => this.showSectionOptionFragment(section)}
+                {name: "Options", onclick: () => this.showSectionOptionFragment(section)},
+                {name: "Copy", onclick: () => this.addSection(section)},
+                {separator: true},
+                {name: "Remove", onclick: () => this.removeSection(section)}
                     
             ],
             toTheRight: true
@@ -520,10 +524,13 @@ Dawesome.prototype.showAddPartWindow = function () {
     
 }
 
-Dawesome.prototype.addSection = function () {
+Dawesome.prototype.addSection = function (sectionToCopy) {
     
     var newSection
-    if (this.section) {
+    if (sectionToCopy) {
+        newSection = this.song.addSection(sectionToCopy.data)
+    }
+    else if (this.section) {
         newSection = this.song.addSection(this.section.data)
     }
     else {
@@ -666,7 +673,7 @@ Dawesome.prototype.setupMenu = function () {
                 {name: "Arrangement", onclick: () => this.showArrangementWindow()},
                 {separator: true},
                 {name: "Live Collaboration", onclick: () => this.showLiveWindow()},
-                {name: "Remote Controls", onclick: () => this.showRemoveControlsWindow()},
+                {name: "Remote Controls", onclick: () => this.showRemoteControlsWindow()},
                 {name: "Monkey Randomizer", onclick: () => this.showRandomizerWindow()}
             ]},
             {name: "Help", items: [
@@ -818,7 +825,7 @@ Dawesome.prototype.showFXDetail = function (fx, part) {
 
 }
 
-Dawesome.prototype.showRemoveControlsWindow = function () {
+Dawesome.prototype.showRemoteControlsWindow = function () {
     var f = new liveFragments.RemoteFragment(this)
 
     this.wm.showFragment(f, {
@@ -957,12 +964,31 @@ Dawesome.prototype.resizeTimelineSections = function () {
 
 Dawesome.prototype.setupHotKeys = function () {
     window.onkeypress = (e) => {
-        if (e.key === " " && e.target.tagName === "BODY") {
+        if (e.target.tagName !== "BODY") {
+            return
+        }
+
+        if (e.key === " ") {
             this.transport.playButtonEl.onclick()
         }
     
-        if (e.key === "r" && !tg.player.playing) {
+        if (e.key === "r" && !this.player.playing) {
             //tg.startRecording()
         }
     };
+}
+
+Dawesome.prototype.removeSection = function (section) {
+
+    this.song.removeSection(section)
+
+    // todo if the section is currently playing? it just keeps going but hidden 
+
+    var i = this.timeline.sectionDivs.indexOf(section.timelineInfo)
+    if (i > -1) {
+        this.timeline.sectionDivs.splice(i, 1)
+        section.timelineInfo.div.parentElement.removeChild(section.timelineInfo.div)
+    }
+
+    this.resizeTimelineSections()
 }

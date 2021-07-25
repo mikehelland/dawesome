@@ -656,6 +656,7 @@ export function FXFragment(daw) {
     this.wm = daw.wm
 
     this.partDivs = new Map()
+    this.sliders = []
 
     this.div = document.createElement("div");
     this.div.className = "daw-fx"
@@ -708,6 +709,7 @@ FXFragment.prototype.addFXChannel = function (part) {
     var warpSlider = new SliderCanvas(warpCanvas, prop, part.panner, part.data.audioParams, onchange);
 
     warpSlider.sizeCanvas()
+    this.sliders.push(warpSlider)
 
     this.partDivs.set(part, {div, listDiv})
 
@@ -748,6 +750,12 @@ FXFragment.prototype.loadChannelFX = function (part, fx, listDiv) {
 
     fxDiv.onclick = e => {
         this.daw.showFXDetail(fx, part)
+    }
+}
+
+FXFragment.prototype.onshow = function () {
+    for (var slider of this.sliders) {
+        slider.sizeCanvas()
     }
 }
 
