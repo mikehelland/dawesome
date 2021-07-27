@@ -94,10 +94,9 @@ Dawesome.prototype.loadSong = async function (config) {
         this.player = player    
     }
 
-    // set the the first section, and make one if needed
-    this.section = Object.values(this.song.sections)[0]
-    if (!this.section) {
-        this.section = this.song.addSection({name: "Intro"})
+    // make a blank section if needed
+    if (this.song.data.sections.length === 0) {
+        this.song.addSection({name: "Intro"})
     }
     
     this.loadTimeline()
@@ -166,10 +165,10 @@ Dawesome.prototype.setupTransport = function () {
         if (!this.player.loopSection) {
             this.player.loopSection = this.player.section
             this.transport.loopSectionEl.classList.add("daw-transport-control-active")
-            this.player.section.timelineHeaderDiv.classList.add("daw-timeline-section-caption-active")
+            this.player.section.timelineInfo.headerDiv.classList.add("daw-timeline-section-caption-active")
         }
         else {
-            this.player.section.timelineHeaderDiv.classList.remove("daw-timeline-section-caption-active")
+            this.player.section.timelineInfo.headerDiv.classList.remove("daw-timeline-section-caption-active")
             this.player.loopSection = null
             this.transport.loopSectionEl.classList.remove("daw-transport-control-active")
         }
@@ -286,11 +285,9 @@ Dawesome.prototype.loadTimeline = function () {
                                 (this.song.data.beatParams.subbeats * 
                                 this.song.data.beatParams.beats)
     this.timeline.beatMarker.style.width = this.timeline.subbeatLength + "px"
-    this.timeline.currentSection = Object.values(this.song.sections)[0]
     this.timeline.currentBeat = 0 
     this.player.onBeatPlayedListeners.push((isubbeat, section) => {
         this.timeline.currentBeat = isubbeat === -1 ? 0 : isubbeat
-        this.timeline.currentSection = section
         this.updateTimelineBeatMarker()
     })
     
@@ -298,10 +295,11 @@ Dawesome.prototype.loadTimeline = function () {
         this.addTimelinePartHeader(this.song.parts[partName])
     }
     this.timeline.sectionWidthUsed = 0
-    for (var sectionName in this.song.sections) {
-        var section = this.song.sections[sectionName]
+    for (var i = 0; i < this.song.arrangement.length; i++) {
+        var arrangementSection = this.song.arrangement[i]
+        var section = arrangementSection.section 
 
-        this.addTimelineSection(section)
+        this.addTimelineSection(arrangementSection)
         for (var partName in section.parts) {
             var part = section.parts[partName]
             if (!part.daw) {
@@ -311,7 +309,7 @@ Dawesome.prototype.loadTimeline = function () {
             part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
         }
 
-        this.addSectionPartsToTimeline(section)
+        this.addSectionPartsToTimeline(arrangementSection)
     }
 
     this.refreshTimelineScrollBars()
@@ -365,7 +363,8 @@ Dawesome.prototype.addTimelinePartHeader = function (part) {
     return header
 }
 
-Dawesome.prototype.addTimelineSection = function (section) {
+Dawesome.prototype.addTimelineSection = function (arrangementSection) {
+    var section = arrangementSection.section
     var div = document.createElement("div")
     div.className = "daw-timeline-section"
 
@@ -374,7 +373,7 @@ Dawesome.prototype.addTimelineSection = function (section) {
     div.appendChild(headerDiv)
     headerDiv.onclick = e => {
         e.preventDefault()
-        this.showSectionOptionFragment(section)
+        this.selectSection(arrangementSection)
     }
 
     var captionDiv = document.createElement("span")
@@ -398,14 +397,18 @@ Dawesome.prototype.addTimelineSection = function (section) {
     //captionDiv.appendChild(measuresDiv)
 
     this.timeline.div.appendChild(div)
-    section.timelineDiv = div
-    section.timelineHeaderDiv = headerDiv
-    section.timelineInfo = {section, div, captionDiv, left: this.timeline.headerWidth + this.timeline.sectionWidthUsed}
-    div.style.left = section.timelineInfo.left + "px"
+    arrangementSection.timelineInfo = {
+        section, 
+        div, 
+        captionDiv, 
+        headerDiv,
+        left: this.timeline.headerWidth + this.timeline.sectionWidthUsed
+    }
+    div.style.left = arrangementSection.timelineInfo.left + "px"
     
     this.timeline.sectionDivs.push(section.timelineInfo)
 
-    this.sizeTimelineSection(section)
+    this.sizeTimelineSection(arrangementSection)
 
     headerDiv.oncontextmenu = e => {
         e.preventDefault()
@@ -415,7 +418,7 @@ Dawesome.prototype.addTimelineSection = function (section) {
                 {name: "Options", onclick: () => this.showSectionOptionFragment(section)},
                 {name: "Copy", onclick: () => this.addSection(section)},
                 {separator: true},
-                {name: "Remove", onclick: () => this.removeSection(section)}
+                {name: "Remove", onclick: () => this.removeSection(arrangementSection)}
                     
             ],
             toTheRight: true
@@ -423,13 +426,13 @@ Dawesome.prototype.addTimelineSection = function (section) {
     }
 }
 
-Dawesome.prototype.sizeTimelineSection = function (section, resizing) {
+Dawesome.prototype.sizeTimelineSection = function (arrangementSection, resizing) {
     if (resizing) {
-        this.timeline.sectionWidthUsed -= section.timelineDiv.clientWidth
+        this.timeline.sectionWidthUsed -= arrangementSection.timelineInfo.div.clientWidth
     } 
     
-    section.timelineDiv.style.width = section.data.measures * this.timeline.measureWidth + "px" 
-    this.timeline.sectionWidthUsed += section.data.measures * this.timeline.measureWidth
+    arrangementSection.timelineInfo.div.style.width = arrangementSection.section.data.measures * this.timeline.measureWidth + "px" 
+    this.timeline.sectionWidthUsed += arrangementSection.section.data.measures * this.timeline.measureWidth
 
     if (resizing) {
         let after = false
@@ -439,7 +442,7 @@ Dawesome.prototype.sizeTimelineSection = function (section, resizing) {
             if (after) {
                 o.left = this.timeline.headerWidth + this.timeline.sectionWidthUsed
             }
-            else if (o.section === section) {
+            else if (o.section === arrangementSection) {
                 after = true
             }
 
@@ -449,8 +452,8 @@ Dawesome.prototype.sizeTimelineSection = function (section, resizing) {
         this.moveTimeline(this.timeline.scrollBarX.x, 0)
 
         let part
-        for (part in section.parts) {
-            section.parts[part].daw.updateTimelineCanvas()
+        for (part in arrangementSection.parts) {
+            arrangementSection.parts[part].daw.updateTimelineCanvas()
         }
     }
 }
@@ -528,19 +531,20 @@ Dawesome.prototype.showAddPartWindow = function () {
 
 Dawesome.prototype.addSection = function (sectionToCopy) {
     
-    var newSection
+    var newArrangementSection
     if (sectionToCopy) {
-        newSection = this.song.addSection(sectionToCopy.data)
+        newArrangementSection = this.song.addSection(sectionToCopy.data)
     }
-    else if (this.section) {
-        newSection = this.song.addSection(this.section.data)
+    else if (this.player.section) {
+        newArrangementSection = this.song.addSection(this.player.section.data)
     }
     else {
-        newSection = this.song.addSection()
+        newArrangementSection = this.song.addSection()
     }
+    var section = newArrangementSection.section
     
-    for (var partName in newSection.parts) {
-        var part = newSection.parts[partName]
+    for (var partName in section.parts) {
+        var part = section.parts[partName]
         part.daw = {}
         part.daw.timelineHeader = this.timeline.partHeaders[part.data.name]
         if (!part.daw.timelineHeader) {
@@ -548,23 +552,25 @@ Dawesome.prototype.addSection = function (sectionToCopy) {
         }
     }
 
-    this.addTimelineSection(newSection)
-    this.addSectionPartsToTimeline(newSection);
+    this.addTimelineSection(newArrangementSection)
+    this.addSectionPartsToTimeline(newArrangementSection);
     this.refreshTimelineScrollBars()
 
-    return newSection;
+    return newArrangementSection;
 }
 
-Dawesome.prototype.addSectionPartsToTimeline = function (section) {
+Dawesome.prototype.addSectionPartsToTimeline = function (arrangementSection) {
+    var section = arrangementSection.section
     for (var partName in section.parts) {
         var part = section.parts[partName]
-        this.addPartToTimeline(part, section)
+        this.addPartToTimeline(part, arrangementSection)
     }
 }
 
-Dawesome.prototype.addPartToTimeline = function (part, section) {
+Dawesome.prototype.addPartToTimeline = function (part, arrangementSection) {
+    var section = arrangementSection.section
     var canvas = this.newPartCanvas(part, section)
-    section.timelineDiv.appendChild(canvas)
+    arrangementSection.timelineInfo.div.appendChild(canvas)
     canvas.style.top = part.daw.timelineHeader.div.clientTop + "px"
     canvas.style.left = "0px"
     canvas.style.width = "100%"
@@ -587,13 +593,13 @@ Dawesome.prototype.onPartAddListener = function (headPart) {
     var partHeader = this.addTimelinePartHeader(headPart)
     headPart.daw.timelineHeader = partHeader
 
-    for (var sectionName in this.song.sections){
-        var section = this.song.sections[sectionName]
+    for (var arrangementSection of this.song.arrangement){
+        var section = arrangementSection.section
         var part = section.parts[headPart.data.name] 
         
         part.daw = {}
         part.daw.timelineHeader = this.timeline.partHeaders[part.headPart.data.name]
-        this.addPartToTimeline(part, section)
+        this.addPartToTimeline(part, arrangementSection)
     }
     
 }
@@ -773,9 +779,9 @@ Dawesome.prototype.setupScrollBarEvents = function (scrollBar) {
 
 Dawesome.prototype.moveTimeline = function (x, y) {
     this.timeline.scrollBarX.x = x
-    for (var section in this.timeline.sectionDivs) {
-        this.timeline.sectionDivs[section].div.style.left = 
-            this.timeline.sectionDivs[section].left - x * 
+    for (var arrangementSection of this.song.arrangement) {
+        arrangementSection.timelineInfo.div.style.left = 
+            arrangementSection.timelineInfo.left - x * 
             this.timeline.scrollBarX.canvas.clientWidth + "px"
     }
     this.updateTimelineBeatMarker()
@@ -880,7 +886,8 @@ Dawesome.prototype.showChordsFragment = function (section) {
 }
 
 Dawesome.prototype.updateTimelineBeatMarker = function () {
-    this.timeline.beatMarker.style.left = this.timeline.currentSection.timelineDiv.offsetLeft +
+    //if (this.player.arrangementSection) {
+    this.timeline.beatMarker.style.left = this.player.arrangementSection.timelineInfo.div.offsetLeft +
                                             this.timeline.currentBeat * 
                                             this.timeline.subbeatLength + "px"
 }
@@ -936,8 +943,9 @@ Dawesome.prototype.resizeTimelineSections = function () {
     var left
     var used = 0
     var width
-    for (var sectionInfo of this.timeline.sectionDivs) {
-        width = this.timeline.measureWidth * (sectionInfo.section.data.measures || 1) 
+    for (var arrangementSection of this.song.arrangement) {
+        var sectionInfo = arrangementSection.timelineInfo
+        width = this.timeline.measureWidth * (arrangementSection.section.data.measures || 1) 
         left = used + this.timeline.headerWidth
         
         sectionInfo.div.style.width = width + "px"
@@ -980,17 +988,28 @@ Dawesome.prototype.setupHotKeys = function () {
     };
 }
 
-Dawesome.prototype.removeSection = function (section) {
+Dawesome.prototype.removeSection = function (arrangementSection) {
 
-    this.song.removeSection(section)
+    this.song.removeSection(arrangementSection)
 
     // todo if the section is currently playing? it just keeps going but hidden 
 
-    var i = this.timeline.sectionDivs.indexOf(section.timelineInfo)
-    if (i > -1) {
-        this.timeline.sectionDivs.splice(i, 1)
-        section.timelineInfo.div.parentElement.removeChild(section.timelineInfo.div)
-    }
+    arrangementSection.timelineInfo.div.parentElement.removeChild(arrangementSection.timelineInfo.div)
 
     this.resizeTimelineSections()
+}
+
+Dawesome.prototype.selectSection = function (arrangementSection) {
+    console.log(arrangementSection)
+    if (this.player.loopSection) {
+        this.player.loopSection.timelineInfo.headerDiv.classList.remove("daw-timeline-section-caption-active")
+    }
+
+    this.loopSection = undefined
+
+    this.player.queueSection(arrangementSection)
+    
+    //this.section.timelineInfo.headerDiv.classList.add("daw-timeline-section-caption-active")
+
+    this.updateTimelineBeatMarker()
 }
