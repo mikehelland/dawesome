@@ -480,7 +480,7 @@ Dawesome.prototype.showPartDetail = async function (part) {
         width: 600, height: 600
     })
 
-    if (part.data.surface.url === "PRESET_SEQUENCER") {
+    if (part.surface.url === "PRESET_SEQUENCER") {
         let o = await import("/apps/music/js/sequencer_surface.js")
         let OMGDrumMachine = o.default
         part.detailSurface = new OMGDrumMachine(part.detailWindow.contentDiv, part)
@@ -578,7 +578,7 @@ Dawesome.prototype.addPartToTimeline = function (part, arrangementSection) {
 
     part.daw.timelineCanvas = canvas
     part.daw.updateTimelineCanvas = (track, subbeat, value) => {
-        this.partDrawer.drawPartCanvas(part.data, canvas, 
+        this.partDrawer.drawPartCanvas(part.data, canvas, part.headPart.data.surface.url, 
             this.song.data.beatParams, section.data.measures)
     }
     part.daw.updateTimelineCanvas()
